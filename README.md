@@ -18,7 +18,7 @@ Open http://localhost:5173. `npm run build` creates the static site in `dist`; `
 - On a focused sky, Tab cycles visible named stars; Enter focuses the answer field; Escape leaves the sky controls. Shift+Tab also moves focus out.
 - Correct names are accent-, case-, punctuation-, and space-insensitive. Official alternative spellings are accepted; arbitrary typos are not.
 - Nearby-star buttons let you choose overlapping catalogue entries independently.
-- **Done · reveal sky** opens a review of all stars sorted by apparent magnitude, brightest first (unknown magnitudes last). Got labels are green and missed labels are orange; the stars themselves retain their natural colors. Each list entry shows J2000 right ascension and declination beneath its name. Clicking a result centers and highlights it in the sky. Review mode is saved across reloads, awards no points, and can be exited with **Back to exploring**.
+- **Done · reveal sky** opens a review of all stars sorted by apparent magnitude, brightest first (unknown magnitudes last). Got labels are green and missed labels are orange; the stars themselves retain their natural colors. Each list entry shows J2000 right ascension and declination beneath its name. Clicking a result centers and highlights it in the sky. The bottom sidebar controls show **Resume** and **Restart** in review mode. Resume preserves discoveries; Restart asks for confirmation, then clears discoveries and saved score and returns to the initial sky. Review mode is saved across reloads and awards no points.
 - Field notes return to discovered stars. Progress persists in localStorage on this browser and origin, with one point per catalogue name.
 
 ## Catalogue and attribution

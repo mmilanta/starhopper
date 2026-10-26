@@ -12,9 +12,9 @@ try{
  await page.mouse.click(box.x+q[0],box.y+q[1]);
  const nearby=stars.map(s=>({s,q:project(s.ra,s.dec,{ra:84,dec:2,fov:76},box.width,box.height)})).filter(v=>v.q).map(v=>({...v,d:Math.hypot(v.q[0]-q[0],v.q[1]-q[1])})).filter(v=>v.d<18).sort((a,b)=>a.d-b.d);
  if(nearby.length>1)await page.locator('#nearby button').nth(nearby.findIndex(v=>v.s.name==='Betelgeuse')).click();await page.locator('#guess').fill('wrong');await page.locator('.submit').click();assert.match(await page.locator('#feedback').textContent(),/Not quite/);assert.equal(await page.locator('#score').textContent(),'0');
- await page.locator('#guess').fill('BETELGEUSE');await page.locator('.submit').click();assert.equal(await page.locator('#score').textContent(),'1');assert.match(await page.locator('#feedback').textContent(),/Betelgeuse/);assert.ok(await page.locator('.submit').isDisabled());
+ await page.locator('#guess').fill('BETELGEUSE');await page.locator('.submit').click();assert.equal(await page.locator('#score').textContent(),'1');assert.match(await page.locator('#feedback').textContent(),/Betelgeuse/);assert.ok(await page.locator('.guess-input').isHidden());
  await page.reload();await page.waitForSelector('#loading',{state:'detached'});assert.equal(await page.locator('#score').textContent(),'1');
- await page.locator('#plus').click();assert.equal(await page.locator('#zoom-value').textContent(),'1.3×');
+ await page.locator('#sky').focus();await page.keyboard.press('+');
  await page.screenshot({path:'/tmp/starhopper-desktop.png'});
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:'/tmp/starhopper-mobile.png'});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.locator('#help').click();assert.ok(await page.locator('#help-dialog').isVisible());await page.keyboard.press('Escape');
