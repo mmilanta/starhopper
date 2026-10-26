@@ -18,12 +18,12 @@ Open http://localhost:5173. `npm run build` creates the static site in `dist`; `
 - On a focused sky, Tab cycles visible named stars; Enter focuses the answer field; Escape leaves the sky controls. Shift+Tab also moves focus out.
 - Correct names are accent-, case-, punctuation-, and space-insensitive. Official alternative spellings are accepted; arbitrary typos are not.
 - Nearby-star buttons let you choose overlapping catalogue entries independently.
-- **Done · reveal sky** opens a review of all stars sorted by apparent magnitude, brightest first (unknown magnitudes last). Got stars are green; missed stars and names are orange. Clicking a result centers and highlights it in the sky. Review mode is saved across reloads, awards no points, and can be exited with **Back to exploring**.
+- **Done · reveal sky** opens a review of all stars sorted by apparent magnitude, brightest first (unknown magnitudes last). Got stars are green; missed stars and names are orange. Each list entry shows J2000 right ascension and declination beneath its name. Clicking a result centers and highlights it in the sky. Review mode is saved across reloads, awards no points, and can be exited with **Back to exploring**.
 - Field notes return to discovered stars. Progress persists in localStorage on this browser and origin, with one point per catalogue name.
 
 ## Catalogue and attribution
 
-Bundled snapshot retrieved 2026-10-26: **652 names** from the [IAU Catalog of Star Names](https://exopla.net/star-names/modern-iau-star-names/), linked by the [IAU](https://www.iau.org/IAU/IAU/News/Ann2026/New-Star-Names-2026.aspx). The count is derived from the data, not imposed as a game limit. Twenty-one rows lack coordinates in the official table; their coordinates come from [Cora Schneck's iau-star-names](https://github.com/cyschneck/iau-star-names) (MIT). Each entry records its coordinate source. Non-numeric visual magnitudes are stored as null.
+Bundled snapshot retrieved 2026-10-26: **652 names** from the [IAU Catalog of Star Names](https://exopla.net/star-names/modern-iau-star-names/), linked by the [IAU](https://www.iau.org/IAU/IAU/News/Ann2026/New-Star-Names-2026.aspx). The count is derived from the data, not imposed as a game limit. Twenty-one rows lack coordinates in the official table; their coordinates come from [Cora Schneck's iau-star-names](https://github.com/cyschneck/iau-star-names) (MIT). Each entry records its coordinate source. Verified coordinate corrections are retained in `scripts/coordinate-corrections.json`; Mizar uses [SIMBAD J2000 coordinates](https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Mizar) to correct an erroneous right ascension in the source table. Non-numeric visual magnitudes are stored as null.
 
 Background stars (to magnitude 6) and constellation lines come from [D3 Celestial](https://github.com/ofrohn/d3-celestial) (BSD-3-Clause). Third-party licenses are in `public/data/`.
 

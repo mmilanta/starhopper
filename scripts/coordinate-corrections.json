@@ -1,0 +1,9 @@
+{
+  "Mizar": {
+    "ra": 200.98141866666668,
+    "dec": 54.92535197222222,
+    "coordinateSource": "SIMBAD",
+    "coordinateReference": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Mizar",
+    "coordinateNote": "SIMBAD ICRS J2000: 13 23 55.54048 +54 55 31.2671. The IAU snapshot incorrectly listed RA 195.398762 degrees."
+  }
+}

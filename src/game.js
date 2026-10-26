@@ -23,3 +23,10 @@ export function starAppearance(magnitude, zoom=1) {
   halo: Math.max(0,Math.min(.35,(2.8-effective)*.075)),
  };
 }
+
+export function formatCoordinates(ra,dec){
+ const pad=n=>String(n).padStart(2,'0');
+ const raSeconds=Math.round(ra/15*3600)%86400;
+ const decSeconds=Math.round(Math.abs(dec)*3600);
+ return `${pad(Math.floor(raSeconds/3600))}h ${pad(Math.floor(raSeconds/60)%60)}m ${pad(raSeconds%60)}s · ${dec<0?'−':'+'}${pad(Math.floor(decSeconds/3600))}° ${pad(Math.floor(decSeconds/60)%60)}′ ${pad(decSeconds%60)}″`;
+}

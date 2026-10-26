@@ -40,6 +40,10 @@ for r in rows:
  try: mag=float(r[15]) if r[15] else float(extra['Magnitude (V, Visual)'])
  except (ValueError, TypeError): mag=None
  stars.append(dict(id=r[0],name=r[0],ra=a,dec=d,mag=mag,constellation=r[6],designation=r[2],aliases=[r[5]] if r[5] and r[5]!=r[0] else [],coordinateSource='supplement' if fallback else 'IAU'))
+# Keep verified corrections when upstream catalogue coordinates are erroneous.
+corrections=json.loads(Path(__file__).with_name('coordinate-corrections.json').read_text())
+for star in stars:
+ star.update(corrections.get(star['id'],{}))
 assert len(stars)==len({s['id'] for s in stars})
 assert all(0<=s['ra']<360 and -90<=s['dec']<=90 for s in stars)
 Path('public/data/stars.json').write_text(json.dumps(stars,ensure_ascii=False,separators=(',',':')))

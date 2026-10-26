@@ -1,5 +1,5 @@
 import './style.css';
-import {matches,readProgress,project,starAppearance} from './game.js';
+import {matches,readProgress,project,starAppearance,formatCoordinates} from './game.js';
 const $=s=>document.querySelector(s);
 $('#app').innerHTML=`
 <header><a class="brand" href="${import.meta.env.BASE_URL}" aria-label="Starhopper home"><span class="brand-icon">✧</span> starhopper<span class="beta">EXPLORER</span></a><div class="header-right"><span class="save"><i></i> <span id="save-status">Progress saved on this device</span></span><button id="done" class="done-button" disabled>Done · reveal sky</button><button id="help" class="quiet">How to play <span>↗</span></button></div></header>
@@ -91,7 +91,7 @@ async function start(){
    [...stars].sort((a,b)=>(a.mag??Infinity)-(b.mag??Infinity)||a.name.localeCompare(b.name)).forEach(s=>{
     const known=found.has(s.id),button=document.createElement('button');button.className=`result ${known?'got':'missed'}`;button.dataset.star=s.id;
     const info=document.createElement('span'),name=document.createElement('strong'),status=document.createElement('small'),mag=document.createElement('span');
-    name.textContent=s.name;status.textContent=known?'Got':'Missed';info.append(name,status);mag.textContent=s.mag==null?'—':s.mag.toFixed(2);mag.className='result-mag';button.append(info,mag);
+    name.textContent=s.name;status.textContent=formatCoordinates(s.ra,s.dec);status.title='Right ascension · Declination (J2000)';button.setAttribute('aria-label',`${s.name}, ${known?'got':'missed'}, ${status.textContent}`);info.append(name,status);mag.textContent=s.mag==null?'—':s.mag.toFixed(2);mag.className='result-mag';button.append(info,mag);
     button.onclick=()=>{view.ra=s.ra;view.dec=s.dec;view.fov=Math.min(view.fov,35);nearby=[];choose(s);document.querySelectorAll('.result[aria-current]').forEach(el=>el.removeAttribute('aria-current'));button.setAttribute('aria-current','true');if(matchMedia('(max-width:700px)').matches)$('.observatory').scrollIntoView({behavior:'smooth',block:'start'});};fragment.append(button);
    });$('#results').replaceChildren(fragment);
   }
