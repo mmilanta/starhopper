@@ -31,6 +31,8 @@ def dec(s):
  sign=-1 if s.startswith('-') else 1
  d,ms=s.lstrip('-+').split('.');ms=ms.ljust(4,'0')
  return sign*(int(d)+int(ms[:2])/60+float(ms[2:4]+'.'+ms[4:])/3600)
+color_catalogue=json.loads(urlopen('https://raw.githubusercontent.com/ofrohn/d3-celestial/master/data/stars.14.json',timeout=60).read())
+color_indices={str(s['id']):s['properties'].get('bv') for s in color_catalogue['features']}
 stars=[]
 for r in rows:
  extra=supplement.get(normalize(r[0]))
@@ -39,7 +41,9 @@ for r in rows:
  d=dec(extra['Declination (DD.SS)']) if fallback else float(r[14])
  try: mag=float(r[15]) if r[15] else float(extra['Magnitude (V, Visual)'])
  except (ValueError, TypeError): mag=None
- stars.append(dict(id=r[0],name=r[0],ra=a,dec=d,mag=mag,constellation=r[6],designation=r[2],aliases=[r[5]] if r[5] and r[5]!=r[0] else [],coordinateSource='supplement' if fallback else 'IAU'))
+ bv_value=color_indices.get(r[3])
+ bv=float(bv_value) if bv_value not in (None,'') else None
+ stars.append(dict(bv=bv,colorSource='XHIP / D3 Celestial' if bv is not None else None,id=r[0],name=r[0],ra=a,dec=d,mag=mag,constellation=r[6],designation=r[2],aliases=[r[5]] if r[5] and r[5]!=r[0] else [],coordinateSource='supplement' if fallback else 'IAU'))
 # Keep verified corrections when upstream catalogue coordinates are erroneous.
 corrections=json.loads(Path(__file__).with_name('coordinate-corrections.json').read_text())
 for star in stars:
