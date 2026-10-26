@@ -4,3 +4,5 @@
 @media(min-width:701px){.reviewing main{height:100dvh;min-height:700px}.reviewing .observatory{min-height:0}.reviewing aside{overflow:hidden}.reviewing #review{display:flex;flex-direction:column;flex:1;overflow:hidden}.reviewing #results{flex:1;max-height:none;min-height:0}.reviewing footer{display:none}}
 
 .sidebar-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:20px;flex-shrink:0}.sidebar-actions .quiet{font-size:11px;padding:8px 0}.sidebar-actions #save-status{width:100%;font-size:9px;color:#7f909b}.reviewing .sidebar-actions{margin-bottom:0}@media(max-width:700px){.sidebar-actions{margin-top:14px;gap:7px}.sidebar-actions .done-button{font-size:11px}.sidebar-actions #save-status{font-size:8px}}
+
+.app-title{font-size:32px;letter-spacing:-1.3px;line-height:1.2;margin:0 0 30px}.reviewing aside>h1.app-title{display:block}@media(max-width:700px){h1.app-title{display:block;font-size:24px;margin:0 0 18px}}

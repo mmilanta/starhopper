@@ -4,7 +4,7 @@ import {matches,readProgress,project,starAppearance,formatCoordinates} from './g
 const $=s=>document.querySelector(s);
 $('#app').innerHTML=`
 
-<main><aside><div class="eyebrow">YOUR OWN PIECE OF THE UNIVERSE</div><h1>A sky full<br>of familiar<br><em>strangers.</em></h1><p class="intro">Every star has a story.<br>How many do you know by name?</p>
+<main><aside><h1 class="app-title">Starhopper</h1>
 <section class="progress"><div class="eyebrow">YOUR DISCOVERIES <span>✦</span></div><div class="score"><strong id="score">0</strong><span>/ <b class="total">—</b> stars</span></div><div class="track"><div id="progress-bar"></div></div><div class="progress-caption"><span id="percent">0% of the sky named</span><span>∞ curiosity</span></div></section>
 <div class="sidebar-actions"><button id="done" class="done-button" disabled>Done · reveal sky</button><button id="help" class="quiet">How to play</button><span id="save-status" role="status">Progress saved on this device</span></div>
 <div class="journal-heading"><h2>Field notes</h2><span id="note-count">00</span></div><div id="journal"><div class="empty"><span>✧</span><p>Your first discovery awaits.</p><small>Select a star and give it a name.<br>It will find a home here.</small></div></div>
