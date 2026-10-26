@@ -40,14 +40,14 @@ async function start(){
   if(showGrid){for(let ra=0;ra<360;ra+=15)path(Array.from({length:91},(_,i)=>[ra,-90+i*2]),'#21323f');for(let dec=-75;dec<=75;dec+=15)path(Array.from({length:181},(_,i)=>[i*2,dec]),'#21323f');}
   if(reviewing)for(const line of lines.features)for(const segment of line.geometry.coordinates)path(segment,'#344c5d');
   // Use the same magnitude response for catalogue stars and background stars.
-  function paintStar(q,mag,bv,known=false,missed=false){
+  function paintStar(q,mag,bv){
    const {radius,opacity,halo}=starAppearance(mag,76/view.fov);
-   const color=known?'169,233,206':missed?'245,169,100':stellarColor(bv);
+   const color=stellarColor(bv);
    if(halo>0){const glow=ctx.createRadialGradient(...q,0,...q,radius*5);glow.addColorStop(0,`rgba(${color},${halo})`);glow.addColorStop(.3,`rgba(${color},${halo*.25})`);glow.addColorStop(1,`rgba(${color},0)`);ctx.fillStyle=glow;ctx.beginPath();ctx.arc(...q,radius*5,0,Math.PI*2);ctx.fill();}
    ctx.fillStyle=`rgba(${color},${opacity})`;ctx.beginPath();ctx.arc(...q,radius,0,Math.PI*2);ctx.fill();
   }
   for(const s of background){const q=p(...s.geometry.coordinates);if(!q||q[0]<0||q[0]>w||q[1]<0||q[1]>h)continue;paintStar(q,s.properties.mag,s.properties.bv);}
-  for(const s of stars){const q=p(s.ra,s.dec);if(!q||q[0]<-20||q[0]>w+20||q[1]<-20||q[1]>h+20)continue;visible.push({s,q});const known=found.has(s.id);paintStar(q,s.mag,s.bv,known,reviewing&&!known);
+  for(const s of stars){const q=p(s.ra,s.dec);if(!q||q[0]<-20||q[0]>w+20||q[1]<-20||q[1]>h+20)continue;visible.push({s,q});const known=found.has(s.id);paintStar(q,s.mag,s.bv);
    if(selected?.id===s.id){ctx.strokeStyle='#b0e7cf';ctx.lineWidth=1;ctx.beginPath();ctx.arc(...q,12,0,Math.PI*2);ctx.stroke();}
   }
   const labelBoxes=[];
