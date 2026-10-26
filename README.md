@@ -16,9 +16,10 @@ Open http://localhost:5173. `npm run build` creates the static site in `dist`; `
 - Drag or use arrow keys with the sky focused to pan; scroll, pinch, or use +/− to zoom.
 - Click a named star to guess. Unnamed background stars are scenery.
 - On a focused sky, Tab cycles visible named stars; Enter focuses the answer field; Escape leaves the sky controls. Shift+Tab also moves focus out.
-- Correct names are accent-, case-, punctuation-, and space-insensitive. Official alternative spellings are accepted; arbitrary typos are not.
+- Correct names are accent-, case-, punctuation-, and space-insensitive. Official alternative spellings are accepted; arbitrary typos are not, but a guess within one or two letters of the name gets a “So close” hint (no point).
+- Clicking a star with a mouse focuses the answer field; Escape there closes the panel and returns focus to the sky.
 - Nearby-star buttons let you choose overlapping catalogue entries independently.
-- **Done · reveal sky** opens a review of all stars sorted by apparent magnitude, brightest first (unknown magnitudes last). Got labels are green and missed labels are orange; the stars themselves retain their natural colors. Each list entry shows J2000 right ascension and declination beneath its name. Clicking a result centers and highlights it in the sky. The bottom sidebar controls show **Resume** and **Restart** in review mode. Resume preserves discoveries; Restart asks for confirmation, then clears discoveries and saved score and returns to the initial sky. Review mode is saved across reloads and awards no points.
+- **Done · reveal sky** opens a review of all stars sorted by apparent magnitude, brightest first (unknown magnitudes last). Got labels are green and missed labels are orange; the stars themselves retain their natural colors. Each list entry shows J2000 right ascension and declination beneath its name. Clicking a result flies to it and highlights it in the sky (instant with reduced motion). The bottom sidebar controls show **Resume** and **Restart** in review mode. Resume preserves discoveries; Restart asks for confirmation, then clears discoveries and saved score and returns to the initial sky. Review mode is saved across reloads and awards no points.
 - Field notes return to discovered stars. Progress persists in localStorage on this browser and origin, with one point per catalogue name.
 
 ## Catalogue and attribution

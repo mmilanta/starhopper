@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {normalize,matches,readProgress,project} from '../src/game.js';
+import {normalize,matches,isNearMiss,readProgress,project} from '../src/game.js';
 const stars=JSON.parse(fs.readFileSync('public/data/stars.json'));
 test('complete catalogue has unique names and valid coordinates',()=>{assert.equal(stars.length,652);assert.equal(new Set(stars.map(s=>s.id)).size,652);for(const s of stars){assert.ok(Number.isFinite(s.ra)&&s.ra>=0&&s.ra<360);assert.ok(Number.isFinite(s.dec)&&Math.abs(s.dec)<=90);assert.ok(s.mag===null||Number.isFinite(s.mag));}});
 test('proper names tolerate case, accents, spaces and punctuation without fuzzy false positives',()=>{assert.equal(normalize('  Áldu! '),'aldu');assert.ok(matches({name:'Batsũ̀',aliases:[]},'batsu'));assert.ok(matches({name:'Gajahmina',aliases:['Gajamina']},'Gajamina'));assert.equal(matches({name:'Sirius',aliases:[]},'Siruis'),false);});
@@ -16,4 +16,10 @@ test('Mizar matches SIMBAD J2000 and stays close to Alcor',()=>{
  assert.ok(Math.abs(mizar.dec-expectedDec)<1e-7);
  const separation=Math.hypot((mizar.ra-alcor.ra)*Math.cos(mizar.dec*Math.PI/180),mizar.dec-alcor.dec);
  assert.ok(separation>.18&&separation<.21,'Mizar should be about 12 arcminutes from Alcor');
+});
+
+test('near misses flag small typos without awarding matches',()=>{
+ const sirius={name:'Sirius',aliases:[]},betelgeuse={name:'Betelgeuse',aliases:[]};
+ assert.ok(isNearMiss(sirius,'Siruis'));assert.ok(isNearMiss(sirius,'Sirus'));assert.ok(isNearMiss(betelgeuse,'Betelguese'));
+ assert.equal(isNearMiss(sirius,'Sirius'),false);assert.equal(isNearMiss(sirius,'Vega'),false);assert.equal(isNearMiss(betelgeuse,'wrong'),false);assert.equal(isNearMiss({name:'Ain',aliases:[]},'Ai'),false);
 });

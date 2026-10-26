@@ -1,5 +1,20 @@
 export const normalize = value => value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 export const matches = (star, guess) => [star.name, ...star.aliases].some(name => normalize(name) === normalize(guess));
+// Optimal string alignment distance: insertions, deletions, substitutions and adjacent swaps.
+export function editDistance(a, b) {
+ const d=Array.from({length:a.length+1},(_,i)=>[i,...Array(b.length).fill(0)]);
+ for(let j=1;j<=b.length;j++)d[0][j]=j;
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){
+  d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1);
+ }
+ return d[a.length][b.length];
+}
+// A near miss earns no point; it only tells the player the spelling is almost right.
+export const isNearMiss = (star, guess) => {
+ const g=normalize(guess);
+ return g.length>=3 && !matches(star,guess) && [star.name, ...star.aliases].some(name => {const n=normalize(name);return editDistance(n,g)<=(n.length>=7?2:1);});
+};
 export function readProgress(storage, stars) {
  try { const value=JSON.parse(storage.getItem('starhopper.discovered') || '[]'); return new Set(Array.isArray(value) ? value.filter(id => stars.some(s => s.id===id)) : []); } catch { return new Set(); }
 }
