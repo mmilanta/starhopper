@@ -36,4 +36,4 @@ Static J2000 equatorial positions with a perspective projection, including both 
 
 ## Deployment
 
-Live at https://mmilanta.github.io/starhopper/. Deploy only when explicitly requested. Pushes do not deploy. Manually run the Deploy to GitHub Pages workflow (`gh workflow run pages.yml --ref main`) to run tests, build, and deploy using `.github/workflows/pages.yml`. Production assets and catalogue URLs use the `/starhopper/` base path. Local development still uses `/`.
+Live at https://mmilanta.github.io/starhopper/. Every push to `main` runs tests, builds the site, and deploys to GitHub Pages using `.github/workflows/pages.yml`. To redeploy without a push, run `gh workflow run pages.yml --ref main`. Production assets and catalogue URLs use the `/starhopper/` base path. Local development still uses `/`.
