@@ -5,7 +5,7 @@ const $=s=>document.querySelector(s);
 $('#app').innerHTML=`
 
 <main><aside><h1 class="app-title">Starhopper</h1>
-<section class="progress" aria-label="Named stars"><div class="score"><strong id="score">0</strong><span>/ <b class="total">—</b> named stars</span></div><div class="track" aria-hidden="true"><div id="progress-bar"></div></div></section>
+<section class="progress" aria-label="Named stars"><div class="score"><strong id="score">0</strong><span>/ <b class="total">—</b><span class="score-label"> named stars</span></span></div><div class="track" aria-hidden="true"><div id="progress-bar"></div></div></section>
 
 <div class="journal-heading"><h2>Field notes</h2><span id="note-count">00</span></div><div id="journal"><div class="empty"><span>✧</span><p>Your first discovery awaits.</p><small>Select a star and give it a name.<br>It will find a home here.</small></div></div>
 <section id="review" hidden aria-label="Star results"><div class="review-legend"><span class="got">● Got</span><span class="missed">● Missed</span></div><div class="review-columns"><span>BRIGHTEST FIRST</span><span>APP. MAG.</span></div><div id="results"></div><p class="review-hint">Click a star to fly to it. Names without a visual magnitude appear last.</p></section>
@@ -69,7 +69,7 @@ async function start(){
   const obstacles=[...document.querySelectorAll('.sky-caption,.map-tools,.star-panel')].map(el=>el.getBoundingClientRect()).filter(r=>r.width).map(r=>({left:r.left-sky.left-6,right:r.right-sky.left+6,top:r.top-sky.top-6,bottom:r.bottom-sky.top+6}));
   const labelBoxes=[];
   const labelled=visible.filter(v=>reviewing||found.has(v.s.id)).sort((a,b)=>(b.s.id===selected?.id)-(a.s.id===selected?.id)||(a.s.mag??Infinity)-(b.s.mag??Infinity));
-  ctx.font='12px system-ui';
+  ctx.font='11px "JetBrains Mono", monospace';
   for(const {s,q} of labelled){
    const width=ctx.measureText(s.name).width;
    let box;
@@ -88,7 +88,7 @@ async function start(){
    }
    labelBoxes.push(box);const color=found.has(s.id)?'#a9e9ce':'#f5a964';
    if(Math.abs(box.y-(q[1]-8))>10){ctx.beginPath();ctx.moveTo(...q);ctx.lineTo(box.x-3,box.y-4);ctx.strokeStyle=found.has(s.id)?'#a9e9ce55':'#f5a96455';ctx.lineWidth=.6;ctx.stroke();}
-   ctx.fillStyle=color;ctx.strokeStyle='#070e16';ctx.lineWidth=3;ctx.strokeText(s.name,box.x,box.y);ctx.fillText(s.name,box.x,box.y);
+   ctx.fillStyle=color;ctx.strokeStyle='#111415';ctx.lineWidth=3;ctx.strokeText(s.name,box.x,box.y);ctx.fillText(s.name,box.x,box.y);
   }
   const coordinates=`${String(Math.floor(view.ra/15)).padStart(2,'0')}h ${String(Math.floor(view.ra%15*4)).padStart(2,'0')}m   ${view.dec>=0?'+':''}${view.dec.toFixed(0)}°`;
   if($('#coordinates').textContent!==coordinates)$('#coordinates').textContent=coordinates;
@@ -169,5 +169,6 @@ async function start(){
  };
  $('#done').disabled=false;$('#done').onclick=()=>setReview(!reviewing);
  update();setReview(reviewing);resize();$('#loading').remove();
+ document.fonts.ready.then(draw);
 }
 start().catch(error=>{$('#loading').textContent='The sky could not load. Please refresh to try again.';console.error(error);});
