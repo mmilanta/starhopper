@@ -37,3 +37,6 @@ Static J2000 equatorial positions with a perspective projection, including both 
 ## Deployment
 
 Live at https://mmilanta.github.io/starhopper/. Every push to `main` runs tests, builds the site, and deploys to GitHub Pages using `.github/workflows/pages.yml`. To redeploy without a push, run `gh workflow run pages.yml --ref main`. Production assets and catalogue URLs use the `/starhopper/` base path. Local development still uses `/`.
+# Variable magnitudes
+
+The checked-in visual magnitude ranges are a snapshot of the [AAVSO International Variable Star Index via HEASARC](https://heasarc.gsfc.nasa.gov/W3Browse/all/aavsovsx.html), matched to catalogue stars within 5 arcseconds. The snapshot covers confirmed variables with a visual-band maximum brighter than magnitude 8 and usable visual-band bounds; other stars use the IAU catalogue's single magnitude. A single value does not imply the star is constant. Ranges smaller than 0.2 magnitude are displayed as a single catalogue value.

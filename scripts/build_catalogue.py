@@ -2,7 +2,7 @@
 Run from the repository root: python3 scripts/build_catalogue.py
 Uses only Python's standard library. Review catalogue changes before committing.
 """
-import csv, json, unicodedata
+import csv, json, math, re, unicodedata
 from pathlib import Path
 from urllib.request import urlopen
 from html.parser import HTMLParser
@@ -33,6 +33,7 @@ def dec(s):
  return sign*(int(d)+int(ms[:2])/60+float(ms[2:4]+'.'+ms[4:])/3600)
 color_catalogue=json.loads(urlopen('https://raw.githubusercontent.com/ofrohn/d3-celestial/master/data/stars.14.json',timeout=60).read())
 color_indices={str(s['id']):s['properties'].get('bv') for s in color_catalogue['features']}
+hip_positions={str(s['id']):s['geometry']['coordinates'] for s in color_catalogue['features']}
 stars=[]
 for r in rows:
  extra=supplement.get(normalize(r[0]))
@@ -43,11 +44,22 @@ for r in rows:
  except (ValueError, TypeError): mag=None
  bv_value=color_indices.get(r[3])
  bv=float(bv_value) if bv_value not in (None,'') else None
- stars.append(dict(bv=bv,colorSource='XHIP / D3 Celestial' if bv is not None else None,id=r[0],name=r[0],ra=a,dec=d,mag=mag,constellation=r[6],designation=r[2],aliases=[r[5]] if r[5] and r[5]!=r[0] else [],coordinateSource='supplement' if fallback else 'IAU'))
+ bayer=re.match(r'^([α-ωΑ-Ω][0-9]*)\s',r[4])
+ stars.append(dict(bv=bv,colorSource='XHIP / D3 Celestial' if bv is not None else None,id=r[0],name=r[0],ra=a,dec=d,mag=mag,constellation=r[6],designation=r[2],bayer=f'{bayer.group(1)}-{r[6]}' if bayer else None,aliases=[r[5]] if r[5] and r[5]!=r[0] else [],coordinateSource='supplement' if fallback else 'IAU'))
 # Keep verified corrections when upstream catalogue coordinates are erroneous.
 corrections=json.loads(Path(__file__).with_name('coordinate-corrections.json').read_text())
+variable_magnitudes=json.loads(Path(__file__).with_name('variable-magnitudes.json').read_text())
 for star in stars:
  star.update(corrections.get(star['id'],{}))
+ if star['id'] in variable_magnitudes: star['magRange']=variable_magnitudes[star['id']]
+# Catch catalogue coordinate errors before publishing a refreshed sky. HIP
+# positions are rounded to 0.0001 degree in D3 Celestial.
+for star, row in zip(stars, rows):
+ position=hip_positions.get(row[3])
+ if position:
+  delta=(star['ra']-position[0]+180)%360-180
+  separation=math.hypot(delta*math.cos(math.radians(star['dec'])),star['dec']-position[1])*3600
+  if separation>30: raise ValueError(f"{star['id']}: position differs from HIP {row[3]} by {separation:.1f} arcseconds")
 assert len(stars)==len({s['id'] for s in stars})
 assert all(0<=s['ra']<360 and -90<=s['dec']<=90 for s in stars)
 Path('public/data/stars.json').write_text(json.dumps(stars,ensure_ascii=False,separators=(',',':')))

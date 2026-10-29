@@ -5,5 +5,128 @@
     "coordinateSource": "SIMBAD",
     "coordinateReference": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Mizar",
     "coordinateNote": "SIMBAD ICRS J2000: 13 23 55.54048 +54 55 31.2671. The IAU snapshot incorrectly listed RA 195.398762 degrees."
+  },
+  "Mira": {
+    "ra": 34.836625,
+    "dec": -2.97763889,
+    "coordinateSource": "AAVSO VSX",
+    "coordinateReference": "https://vsx.aavso.org/index.php?view=detail.top&oid=9237",
+    "coordinateNote": "VSX J2000: 02 19 20.79 −02 58 39.5. The IAU snapshot listed an incorrect right ascension."
+  },
+  "Ebla": {
+    "ra": 347.2947,
+    "dec": -2.2607,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 114322; replaces discrepant IAU snapshot coordinates."
+  },
+  "Alsephina": {
+    "ra": 131.1759,
+    "dec": -54.7088,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 42913; replaces discrepant IAU snapshot coordinates."
+  },
+  "Nganurganity": {
+    "ra": 105.4298,
+    "dec": -27.9348,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 33856; replaces discrepant IAU snapshot coordinates."
+  },
+  "Alrakis": {
+    "ra": 256.3338,
+    "dec": 54.47,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 83608; replaces discrepant IAU snapshot coordinates."
+  },
+  "Barnard's Star": {
+    "ra": 269.4521,
+    "dec": 4.6934,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 87937; replaces discrepant IAU snapshot coordinates."
+  },
+  "Tegmine": {
+    "ra": 123.053,
+    "dec": 17.6478,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 40167; replaces discrepant IAU snapshot coordinates."
+  },
+  "Alkalurops": {
+    "ra": 231.1226,
+    "dec": 37.3772,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 75411; replaces discrepant IAU snapshot coordinates."
+  },
+  "Alrescha": {
+    "ra": 30.5118,
+    "dec": 2.7638,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 9487; replaces discrepant IAU snapshot coordinates."
+  },
+  "Copernicus": {
+    "ra": 133.1492,
+    "dec": 28.3308,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 43587; replaces discrepant IAU snapshot coordinates."
+  },
+  "Tonatiuh": {
+    "ra": 181.313,
+    "dec": 76.9057,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 58952; replaces discrepant IAU snapshot coordinates."
+  },
+  "Rasalgethi": {
+    "ra": 258.6619,
+    "dec": 14.3903,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 84345; replaces discrepant IAU snapshot coordinates."
+  },
+  "Chalawan": {
+    "ra": 164.8666,
+    "dec": 40.4303,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 53721; replaces discrepant IAU snapshot coordinates."
+  },
+  "Errai": {
+    "ra": 354.8369,
+    "dec": 77.6323,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 116727; replaces discrepant IAU snapshot coordinates."
+  },
+  "Veritate": {
+    "ra": 352.8226,
+    "dec": 39.2362,
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "J2000 position for HIP 116076; replaces discrepant IAU snapshot coordinates."
+  },
+  "Anunitu": {
+    "ra": 9.6389,
+    "dec": 29.3118,
+    "mag": 4.34,
+    "designation": "HR 163",
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "The IAU entry identifies HIP 3031 but lists the HR number and coordinates of a different star."
+  },
+  "Zibbatu": {
+    "ra": 30.0382,
+    "dec": 3.097,
+    "mag": 5.89,
+    "designation": "HR 582",
+    "coordinateSource": "XHIP / D3 Celestial",
+    "coordinateReference": "https://github.com/ofrohn/d3-celestial/blob/master/data/stars.14.json",
+    "coordinateNote": "The IAU entry identifies HIP 9353 but lists the HR number and coordinates of a different star."
   }
 }

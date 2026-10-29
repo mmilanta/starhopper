@@ -1,5 +1,9 @@
 export const normalize = value => value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 export const matches = (star, guess) => [star.name, ...star.aliases].some(name => normalize(name) === normalize(guess));
+export const formatMagnitude = star => {
+ if (star.magRange && star.magRange[1] - star.magRange[0] >= 0.2) return `mag ${star.magRange.map(n => n.toFixed(2)).join('–')}`;
+ return star.mag == null ? '' : `mag ${star.mag.toFixed(2)}`;
+};
 // Optimal string alignment distance: insertions, deletions, substitutions and adjacent swaps.
 export function editDistance(a, b) {
  const d=Array.from({length:a.length+1},(_,i)=>[i,...Array(b.length).fill(0)]);

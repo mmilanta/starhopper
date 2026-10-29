@@ -1,8 +1,26 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {normalize,matches,isNearMiss,readProgress,project} from '../src/game.js';
+import {normalize,matches,isNearMiss,readProgress,project,formatMagnitude} from '../src/game.js';
 const stars=JSON.parse(fs.readFileSync('public/data/stars.json'));
+test('magnitude shows meaningful ranges and otherwise the catalogue value',()=>{
+ assert.equal(formatMagnitude({mag:1.2,magRange:[0,1.6]}),'mag 0.00–1.60');
+ assert.equal(formatMagnitude({mag:1.2,magRange:[1.1,1.2]}),'mag 1.20');
+ assert.equal(formatMagnitude({mag:null}),'');
+});
+test('Mira has its correct position and visual magnitude range',()=>{
+ const mira=stars.find(s=>s.name==='Mira');
+ assert.ok(Math.abs(mira.ra-34.836625)<1e-6);
+ assert.equal(formatMagnitude(mira),'mag 2.00–10.10');
+});
+test('catalogue corrections preserve identities and recovered variable ranges',()=>{
+ const byName=name=>stars.find(s=>s.name===name);
+ assert.ok(Math.abs(byName('Alrescha').dec-2.7638)<0.001);
+ assert.equal(byName('Zibbatu').designation,'HR 582');
+ assert.equal(byName('Anunitu').designation,'HR 163');
+ assert.equal(formatMagnitude(byName('Alsephina')),'mag 1.95–2.43');
+ assert.equal(formatMagnitude(byName('Rasalgethi')),'mag 2.73–3.60');
+});
 test('complete catalogue has unique names and valid coordinates',()=>{assert.equal(stars.length,652);assert.equal(new Set(stars.map(s=>s.id)).size,652);for(const s of stars){assert.ok(Number.isFinite(s.ra)&&s.ra>=0&&s.ra<360);assert.ok(Number.isFinite(s.dec)&&Math.abs(s.dec)<=90);assert.ok(s.mag===null||Number.isFinite(s.mag));}});
 test('proper names tolerate case, accents, spaces and punctuation without fuzzy false positives',()=>{assert.equal(normalize('  Áldu! '),'aldu');assert.ok(matches({name:'Batsũ̀',aliases:[]},'batsu'));assert.ok(matches({name:'Gajahmina',aliases:['Gajamina']},'Gajamina'));assert.equal(matches({name:'Sirius',aliases:[]},'Siruis'),false);});
 test('progress rejects corrupted data and unknown ids and deduplicates',()=>{for(const value of ['null','{}','broken'])assert.equal(readProgress({getItem:()=>value},stars).size,0);assert.deepEqual([...readProgress({getItem:()=>JSON.stringify(['Sirius','Sirius','fake'])},stars)],['Sirius']);});

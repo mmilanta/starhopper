@@ -1,26 +1,26 @@
 import './style.css';
 import {stellarColor} from './star-color.js';
-import {matches,isNearMiss,readProgress,project,starAppearance,formatCoordinates} from './game.js';
+import {matches,isNearMiss,readProgress,project,starAppearance,formatMagnitude} from './game.js';
 const $=s=>document.querySelector(s);
 $('#app').innerHTML=`
 
-<main><aside><h1 class="app-title">Starhopper</h1>
-<section class="progress" aria-label="Named stars"><div class="score"><strong id="score">0</strong><span>/ <b class="total">—</b><span class="score-label"> named stars</span></span></div><div class="track" aria-hidden="true"><div id="progress-bar"></div></div></section>
+<main><aside><div class="sidebar-header"><h1 class="app-title">Starhopper</h1>
+<div class="score" aria-label="Named stars"><strong id="score">0</strong><span>/ <b class="total">—</b></span></div></div>
 
-<div class="journal-heading"><h2>Field notes</h2><span id="note-count">00</span></div><div id="journal"><div class="empty"><span>✧</span><p>Your first discovery awaits.</p><small>Select a star and give it a name.<br>It will find a home here.</small></div></div>
-<section id="review" hidden aria-label="Star results"><div class="review-legend"><span class="got">● Got</span><span class="missed">● Missed</span></div><div class="review-columns"><span>BRIGHTEST FIRST</span><span>APP. MAG.</span></div><div id="results"></div><p class="review-hint">Click a star to fly to it. Names without a visual magnitude appear last.</p></section>
-<footer class="action-footer"><div class="sidebar-actions"><div class="session-actions"><button id="done" class="done-button" disabled>Done · reveal sky</button><button id="restart" class="restart-button" hidden>Restart</button></div><button id="help" class="quiet">How to play</button><span id="save-status" role="status" hidden></span></div></footer></aside>
-<section class="observatory" aria-label="Interactive night sky"><canvas id="sky" tabindex="0" aria-label="Night sky. Drag or use arrow keys to look around. Scroll or use plus and minus to zoom. Tab selects the next visible named star."></canvas><div class="map-tools"><button id="grid" class="tool" aria-pressed="false" title="Toggle coordinate grid">⊞</button></div>
+<div id="journal" aria-label="Named stars"><div class="empty"><span>✧</span><p>Your first discovery awaits.</p><small>Select a star and give it a name.<br>It will find a home here.</small></div></div>
+<section id="review" hidden aria-label="Star results"><input id="result-search" type="search" aria-label="Search stars" placeholder="Search stars" autocomplete="off"><div class="discovery-heading"><span>Star</span><span>Magnitude</span></div><div id="results"></div></section>
+<footer class="action-footer"><div class="sidebar-actions"><div class="session-actions"><button id="done" class="done-button" disabled>Done · reveal sky</button><button id="restart" class="restart-button" hidden>Restart</button><button id="help" class="quiet" aria-label="How to play">[?]</button></div><span id="save-status" role="status" hidden></span></div></footer></aside>
+<section class="observatory" aria-label="Interactive night sky"><canvas id="sky" tabindex="0" aria-label="Night sky. Drag or use arrow keys to look around. Scroll or use plus and minus to zoom. Tab selects the next visible named star."></canvas><div class="map-tools"><button id="review-toggle" class="tool" aria-controls="review" aria-expanded="true" aria-label="Hide star list" title="Hide star list"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.25 8 5.75l4.5 4.5"/></svg></button><button id="grid" class="tool" aria-pressed="false" title="Toggle coordinate grid">⊞</button></div>
 <div class="sky-caption"><span id="coordinates">05h 36m &nbsp; +02°</span><span>J2000 · EQUATORIAL VIEW</span></div>
 <div class="star-panel">
 <div id="selection" class="panel-idle"><span aria-hidden="true">✦</span><p id="selection-description">Click on a star and name it</p></div>
 <form id="guess-form" hidden>
-<div class="panel-heading"><div class="panel-details"><div class="panel-name"><h2 id="star-kind"></h2><span id="star-status" hidden></span></div><p id="star-detail"></p></div><button id="close" type="button" aria-label="Close selected star">×</button></div>
-<div class="guess-input"><input id="guess" aria-label="Star name" placeholder="Star name" autocomplete="off" spellcheck="false" required><button class="submit" type="submit">Name star</button></div>
-<p id="feedback" role="status" aria-live="polite"></p><div id="nearby" aria-label="Nearby stars"></div>
+<div class="panel-heading"><div class="panel-details"><div class="panel-name"><h2 id="star-kind"></h2></div><p id="star-detail"></p></div></div>
+<div class="guess-input"><div class="guess-field"><input id="guess" aria-label="Star name" aria-describedby="guess-magnitude" placeholder="Star name" autocomplete="off" spellcheck="false" required><span id="guess-magnitude"></span></div><button class="submit" type="submit">Name star</button></div>
+<p id="feedback" role="status" aria-live="polite"></p>
 </form></div>
 <div id="loading" role="status">Charting the stars…</div></section></main>
-<dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star and enter its proper name to earn one point and reveal its label.</p><p>All <span class="total">—</span> catalogue names are included, even stars too faint to see with the naked eye. Their minimum display size is enlarged so you can select them. Close companions can be selected using the nearby-star buttons.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each name earns one point, once. Progress stays in this browser. Choose Done to review all stars from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible stars, Enter to type a guess, or Escape to leave the sky.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky, not a live view from your location.</small></dialog>`;
+<dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star and enter its proper name to reveal its label.</p><p>All <span class="total">—</span> catalogue names are included, even stars too faint to see with the naked eye. Their minimum display size is enlarged so you can select them.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each star can be named once. Progress stays in this browser. Choose Done to review all stars from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible stars, Enter to type a guess, or Escape to leave the sky.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky, not a live view from your location.</small></dialog>`;
 $('#help').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 async function start(){
  const [stars,bg,lines]=await Promise.all(['stars','background','constellations'].map(async name=>{const response=await fetch(`${import.meta.env.BASE_URL}data/${name}.json`);if(!response.ok)throw Error('Catalogue unavailable');return response.json();}));
@@ -33,14 +33,15 @@ async function start(){
  let storage;try{storage=window.localStorage;}catch{}
  const found=readProgress(storage,stars), view={ra:84,dec:2,fov:76};
  let reviewing=false;try{reviewing=storage?.getItem('starhopper.review')==='true';}catch{}
- let selected=null,hovered=null,pulse=null,visible=[],showGrid=false,w=0,h=0,nearby=[],keyboardIndex=0,frame=0,flight=0;
+ let selected=null,hovered=null,pulse=null,visible=[],showGrid=false,w=0,h=0,keyboardIndex=0,frame=0,flight=0;
  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
  const canvas=$('#sky'),ctx=canvas.getContext('2d');
  const emptyJournal=$('#journal').innerHTML;
+ const starDetail=s=>[s.bayer || `${s.designation} · ${s.constellation}`, formatMagnitude(s)].filter(Boolean).join(' · ');
  function update(){
-  $('#score').textContent=found.size;document.querySelectorAll('.total').forEach(el=>el.textContent=stars.length);$('#note-count').textContent=String(found.size).padStart(2,'0');$('#progress-bar').style.width=`${found.size?Math.max(1,found.size/stars.length*100):0}%`;
+  $('#score').textContent=found.size;document.querySelectorAll('.total').forEach(el=>el.textContent=stars.length);
   if(!found.size)$('#journal').innerHTML=emptyJournal;
-  if(found.size){$('#journal').replaceChildren();[...found].reverse().forEach(id=>{const s=stars.find(s=>s.id===id);const b=document.createElement('button');b.className='discovery';const name=document.createElement('span');name.textContent=s.name;const detail=document.createElement('small');detail.textContent=`${s.constellation} ↗`;b.append(name,detail);b.onclick=()=>{nearby=[];flyTo(s.ra,s.dec);choose(s);};$('#journal').append(b);});}
+  if(found.size){$('#journal').replaceChildren();const heading=document.createElement('div');heading.className='discovery-heading';const starHeading=document.createElement('span'),magnitudeHeading=document.createElement('span');starHeading.textContent='Star';magnitudeHeading.textContent='Magnitude';heading.append(starHeading,magnitudeHeading);$('#journal').append(heading);[...found].reverse().forEach(id=>{const s=stars.find(s=>s.id===id);const b=document.createElement('button');b.className='discovery';const identity=document.createElement('span');identity.className='discovery-identity';const name=document.createElement('span');name.textContent=s.name;const detail=document.createElement('small');detail.textContent=s.bayer || `${s.designation} · ${s.constellation}`;identity.append(name,detail);const magnitude=document.createElement('small');magnitude.className='discovery-magnitude';magnitude.textContent=formatMagnitude(s).replace(/^mag /,'');b.append(identity,magnitude);b.onclick=()=>{flyTo(s.ra,s.dec);choose(s);};$('#journal').append(b);});}
  }
  const p=(ra,dec)=>project(ra,dec,view,w,h);
  function path(coords,color){ctx.beginPath();let last=null;for(const [ra,dec] of coords){const q=p(ra,dec);if(q && last && Math.hypot(q[0]-last[0],q[1]-last[1])<w)ctx.lineTo(...q);else if(q)ctx.moveTo(...q);last=q;}ctx.strokeStyle=color;ctx.lineWidth=.7;ctx.stroke();}
@@ -115,55 +116,50 @@ async function start(){
   $('#selection').hidden=true;$('#guess-form').hidden=false;
   $('#star-kind').textContent=revealed?s.name:'';
   $('#star-kind').classList.toggle('missed',reviewing&&!known);
-  $('#star-status').hidden=!revealed;
-  $('#star-status').textContent=known?'Named':'Missed';
-  $('#star-status').className=known?'got':'missed';
+  $('.star-panel').classList.toggle('named',known);
+  $('.star-panel').classList.toggle('missed',reviewing&&!known);
   $('.guess-input').hidden=revealed;
-  const magnitude=s.mag==null?'Visual magnitude unavailable':`Magnitude ${s.mag.toFixed(2)}`;
+  $('#guess-magnitude').textContent=formatMagnitude(s);
   // Designation and constellation would give the answer away while guessing.
-  $('#star-detail').textContent=revealed?`${s.designation} · ${s.constellation} · ${magnitude}`:magnitude;
+  $('#star-detail').textContent=revealed?starDetail(s):'';
   $('#guess').value='';$('#guess').disabled=revealed;$('.submit').disabled=revealed;
   $('#feedback').textContent='';$('#feedback').className='';$('#guess').removeAttribute('aria-invalid');
-  $('#nearby').replaceChildren();
-  if(nearby.length>1){
-   const caption=document.createElement('span');caption.className='nearby-caption';caption.textContent='Nearby stars';$('#nearby').append(caption);
-   nearby.forEach((n,i)=>{
-    const button=document.createElement('button');button.type='button';button.textContent=found.has(n.id)||reviewing?n.name:`Star ${i+1}`;
-    button.setAttribute('aria-pressed',String(n.id===s.id));button.onclick=()=>choose(n);$('#nearby').append(button);
-   });
-  }
   if(focus&&!revealed)$('#guess').focus({preventScroll:true});
   render();
  }
- function close(){selected=null;$('#guess-form').hidden=true;$('#selection').hidden=false;render();}$('#close').onclick=close;
+ function close(){selected=null;$('.star-panel').classList.remove('named','missed');$('#guess-form').hidden=true;$('#selection').hidden=false;render();}
  $('#guess').onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close();canvas.focus();}};
  $('.guess-input').addEventListener('animationend',()=>$('.guess-input').classList.remove('shake'));
- $('#guess-form').onsubmit=e=>{e.preventDefault();if(reviewing||!selected||found.has(selected.id))return;if(matches(selected,$('#guess').value)){found.add(selected.id);try{storage.setItem('starhopper.discovered',JSON.stringify([...found]));}catch{$('#save-status').hidden=false;$('#save-status').textContent='Progress is session-only; storage unavailable';}update();pulse={id:selected.id,start:performance.now()};choose(selected);$('#feedback').textContent=found.size===stars.length?`All ${stars.length} stars named.`:`${selected.name} named. +1 point.`;$('#feedback').className='success';}else{const near=isNearMiss(selected,$('#guess').value);$('#feedback').textContent=near?'So close. Check the spelling.':'Not quite. Try again.';$('#feedback').className=near?'close':'incorrect';$('#guess').setAttribute('aria-invalid','true');$('#guess').select();const field=$('.guess-input');field.classList.remove('shake');void field.offsetWidth;field.classList.add('shake');}};
+ $('#guess-form').onsubmit=e=>{e.preventDefault();if(reviewing||!selected||found.has(selected.id))return;if(matches(selected,$('#guess').value)){found.add(selected.id);try{storage.setItem('starhopper.discovered',JSON.stringify([...found]));}catch{$('#save-status').hidden=false;$('#save-status').textContent='Progress is session-only; storage unavailable';}update();pulse={id:selected.id,start:performance.now()};choose(selected);}else{const near=isNearMiss(selected,$('#guess').value);$('#feedback').textContent=near?'So close. Check the spelling.':'Not quite. Try again.';$('#feedback').className=near?'close':'incorrect';$('#guess').setAttribute('aria-invalid','true');$('#guess').select();const field=$('.guess-input');field.classList.remove('shake');void field.offsetWidth;field.classList.add('shake');}};
  function zoom(f){view.fov=Math.max(3,Math.min(110,view.fov*f));}$('#grid').onclick=()=>{showGrid=!showGrid;$('#grid').classList.toggle('active',showGrid);$('#grid').setAttribute('aria-pressed',showGrid);render();};canvas.addEventListener('wheel',e=>{e.preventDefault();stopFlight();zoom(Math.exp(e.deltaY*.001));draw();},{passive:false});
  const pointers=new Map();let moved=false,origin=null;
  canvas.onpointerdown=e=>{stopFlight();hovered=null;canvas.style.cursor='';canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){origin={x:e.clientX,y:e.clientY};moved=false;}else moved=true;};
  canvas.onpointermove=e=>{if(!pointers.has(e.pointerId)){if(e.pointerType==='mouse'){const rect=canvas.getBoundingClientRect(),next=hits(e.clientX-rect.left,e.clientY-rect.top)[0]?.s??null;if(next!==hovered){hovered=next;canvas.style.cursor=next?'pointer':'';draw();}}return;}const old=pointers.get(e.pointerId),next={x:e.clientX,y:e.clientY};if(pointers.size===2){const other=[...pointers.entries()].find(([id])=>id!==e.pointerId)[1];const before=Math.hypot(old.x-other.x,old.y-other.y),after=Math.hypot(next.x-other.x,next.y-other.y);if(after>0){zoom(before/after);draw();}}else{const scale=view.fov/Math.min(w,h);view.ra=(view.ra+(next.x-old.x)*scale+360)%360;view.dec=Math.max(-90,Math.min(90,view.dec+(next.y-old.y)*scale));if(Math.hypot(next.x-origin.x,next.y-origin.y)>5)moved=true;draw();}pointers.set(e.pointerId,next);};
- canvas.onpointerup=e=>{pointers.delete(e.pointerId);if(!moved){const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;const candidates=hits(x,y);if(candidates.length){nearby=candidates.map(v=>v.s);const primary=candidates.filter(v=>v.d<=candidates[0].d+3).sort((a,b)=>(a.s.mag??20)-(b.s.mag??20))[0];choose(primary.s,{focus:e.pointerType==='mouse'});}}};canvas.onpointercancel=e=>{pointers.delete(e.pointerId);moved=true;};canvas.onpointerleave=e=>{if(hovered&&!pointers.size){hovered=null;canvas.style.cursor='';draw();}};
- canvas.onkeydown=e=>{if(e.key==='Escape'){close();$('#grid').focus();return;}if(e.key==='Tab'&&!e.shiftKey&&visible.length){e.preventDefault();nearby=[];choose(visible[keyboardIndex++%visible.length].s);return;}if(e.key==='Enter'&&selected&&!reviewing&&!found.has(selected.id)){e.preventDefault();$('#guess').focus();return;}if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-'].includes(e.key)){e.preventDefault();stopFlight();if(e.key==='+'||e.key==='=')zoom(.8);else if(e.key==='-')zoom(1.25);else{const step=view.fov*.08;if(e.key==='ArrowLeft')view.ra+=step;if(e.key==='ArrowRight')view.ra-=step;if(e.key==='ArrowUp')view.dec+=step;if(e.key==='ArrowDown')view.dec-=step;view.ra=(view.ra+360)%360;view.dec=Math.max(-90,Math.min(90,view.dec));}render();}};
+ canvas.onpointerup=e=>{pointers.delete(e.pointerId);if(!moved){const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;const candidates=hits(x,y);if(candidates.length){const primary=candidates.filter(v=>v.d<=candidates[0].d+3).sort((a,b)=>(a.s.mag??20)-(b.s.mag??20))[0];choose(primary.s,{focus:e.pointerType==='mouse'});}}};canvas.onpointercancel=e=>{pointers.delete(e.pointerId);moved=true;};canvas.onpointerleave=e=>{if(hovered&&!pointers.size){hovered=null;canvas.style.cursor='';draw();}};
+ canvas.onkeydown=e=>{if(e.key==='Escape'){close();$('#grid').focus();return;}if(e.key==='Tab'&&!e.shiftKey&&visible.length){e.preventDefault();choose(visible[keyboardIndex++%visible.length].s);return;}if(e.key==='Enter'&&selected&&!reviewing&&!found.has(selected.id)){e.preventDefault();$('#guess').focus();return;}if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-'].includes(e.key)){e.preventDefault();stopFlight();if(e.key==='+'||e.key==='=')zoom(.8);else if(e.key==='-')zoom(1.25);else{const step=view.fov*.08;if(e.key==='ArrowLeft')view.ra+=step;if(e.key==='ArrowRight')view.ra-=step;if(e.key==='ArrowUp')view.dec+=step;if(e.key==='ArrowDown')view.dec-=step;view.ra=(view.ra+360)%360;view.dec=Math.max(-90,Math.min(90,view.dec));}render();}};
  function setReview(value){
   reviewing=value;document.body.classList.toggle('reviewing',value);$('#review').hidden=!value;$('#restart').hidden=!value;
+  if(!value){document.body.classList.remove('review-collapsed');$('#review-toggle').setAttribute('aria-expanded','true');$('#review-toggle').setAttribute('aria-label','Hide star list');$('#review-toggle').title='Hide star list';}
   $('#done').textContent=value?'Resume':'Done · reveal sky';$('#done').setAttribute('aria-pressed',value);
   $('#selection-description').textContent=value?'Select a star to view its details':'Click on a star and name it';
   if(value){
    const fragment=document.createDocumentFragment();
    [...stars].sort((a,b)=>(a.mag??Infinity)-(b.mag??Infinity)||a.name.localeCompare(b.name)).forEach(s=>{
     const known=found.has(s.id),button=document.createElement('button');button.className=`result ${known?'got':'missed'}`;button.dataset.star=s.id;
-    const info=document.createElement('span'),name=document.createElement('strong'),status=document.createElement('small'),mag=document.createElement('span');
-    name.textContent=s.name;status.textContent=formatCoordinates(s.ra,s.dec);status.title='Right ascension · Declination (J2000)';button.setAttribute('aria-label',`${s.name}, ${known?'got':'missed'}, ${status.textContent}`);info.append(name,status);mag.textContent=s.mag==null?'—':s.mag.toFixed(2);mag.className='result-mag';button.append(info,mag);
-    button.onclick=()=>{nearby=[];flyTo(s.ra,s.dec,Math.min(view.fov,35));choose(s);document.querySelectorAll('.result[aria-current]').forEach(el=>el.removeAttribute('aria-current'));button.setAttribute('aria-current','true');if(matchMedia('(max-width:700px)').matches)$('.observatory').scrollIntoView({behavior:'smooth',block:'start'});};fragment.append(button);
-   });$('#results').replaceChildren(fragment);
+    const info=document.createElement('span'),name=document.createElement('span'),detail=document.createElement('small'),mag=document.createElement('small');
+    info.className='discovery-identity';name.textContent=s.name;detail.textContent=s.bayer || `${s.designation} · ${s.constellation}`;button.setAttribute('aria-label',`${s.name}, ${known?'named':'missed'}, ${starDetail(s)}`);info.append(name,detail);mag.textContent=formatMagnitude(s).replace(/^mag /,'')||'—';mag.className='result-mag discovery-magnitude';button.dataset.mag=s.mag??'';button.dataset.search=[s.name,...s.aliases,s.bayer||'',s.designation,s.constellation].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();button.append(info,mag);
+    button.onclick=()=>{flyTo(s.ra,s.dec,Math.min(view.fov,35));choose(s);document.querySelectorAll('.result[aria-current]').forEach(el=>el.removeAttribute('aria-current'));button.setAttribute('aria-current','true');};fragment.append(button);
+   });$('#results').replaceChildren(fragment);filterResults();
   }
   try{storage?.setItem('starhopper.review',String(value));}catch{}
   close();
  }
+ $('#review-toggle').onclick=()=>{const collapsed=document.body.classList.toggle('review-collapsed');const label=collapsed?'Show star list':'Hide star list';$('#review-toggle').setAttribute('aria-expanded',String(!collapsed));$('#review-toggle').setAttribute('aria-label',label);$('#review-toggle').title=label;};
+ function filterResults(){const query=$('#result-search').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();document.querySelectorAll('.result').forEach(row=>{row.hidden=!row.dataset.search.includes(query);});}
+ $('#result-search').addEventListener('input',filterResults);
  $('#restart').onclick=()=>{
   if(!confirm('Restart? This clears all your discoveries and resets your score.'))return;
-  stopFlight();found.clear();nearby=[];pulse=null;keyboardIndex=0;Object.assign(view,{ra:84,dec:2,fov:76});
+  stopFlight();found.clear();pulse=null;keyboardIndex=0;Object.assign(view,{ra:84,dec:2,fov:76});
   try{storage?.removeItem('starhopper.discovered');}catch{$('#save-status').hidden=false;$('#save-status').textContent='Progress is session-only; storage unavailable';}
   update();setReview(false);
  };
