@@ -22,6 +22,40 @@ export const isNearMiss = (star, guess) => {
 export function readProgress(storage, stars) {
  try { const value=JSON.parse(storage.getItem('starhopper.discovered') || '[]'); return new Set(Array.isArray(value) ? value.filter(id => stars.some(s => s.id===id)) : []); } catch { return new Set(); }
 }
+// A representative seasonal sky: the 15th at 22:00 local mean solar time.
+// At longitude zero this is 22:00 UT; longitude cancels when using local solar time.
+// Use J2000's year to stay consistent with the static catalogue's equinox.
+// GMST approximation: https://aa.usno.navy.mil/faq/GAST
+export function observerZenith(latitude, month) {
+ if(!Number.isFinite(latitude)||Math.abs(latitude)>90||!Number.isInteger(month)||month<1||month>12)throw new RangeError('Invalid observer latitude or month');
+ const days=(Date.UTC(2000,month-1,15,22)-Date.UTC(2000,0,1,12))/86400000;
+ return {ra:((280.46061837+360.98564736629*days)%360+360)%360,dec:latitude};
+}
+export function readObserver(storage) {
+ try {
+  const value=JSON.parse(storage?.getItem('starhopper.observer')||'null');
+  if(!value)return null;
+  observerZenith(value.latitude,value.month);
+  return {latitude:value.latitude,month:value.month};
+ }catch{return null;}
+}
+// Rotate the navigation sphere so its north pole is the observer's zenith.
+// Local axes are south, east, up; longitude turns around the local vertical
+// and latitude is altitude. The existing ±90° pan limits now mean zenith/nadir.
+export function createSkyFrame(zenith) {
+ if(!zenith)return {toLocal:(ra,dec)=>({ra,dec}),toEquatorial:(ra,dec)=>({ra,dec})};
+ const r=Math.PI/180,a=zenith.ra*r,d=zenith.dec*r;
+ const south=[Math.sin(d)*Math.cos(a),Math.sin(d)*Math.sin(a),-Math.cos(d)];
+ const east=[-Math.sin(a),Math.cos(a),0];
+ const up=[Math.cos(d)*Math.cos(a),Math.cos(d)*Math.sin(a),Math.sin(d)];
+ const vector=(ra,dec)=>[Math.cos(dec*r)*Math.cos(ra*r),Math.cos(dec*r)*Math.sin(ra*r),Math.sin(dec*r)];
+ const dot=(a,b)=>a.reduce((sum,v,i)=>sum+v*b[i],0);
+ const angles=([x,y,z])=>({ra:Math.hypot(x,y)<1e-12?0:(Math.atan2(y,x)/r+360)%360,dec:Math.atan2(z,Math.hypot(x,y))/r});
+ return {
+  toLocal(ra,dec){const v=vector(ra,dec);return angles([dot(v,south),dot(v,east),dot(v,up)]);},
+  toEquatorial(ra,dec){const v=vector(ra,dec);return angles(south.map((s,i)=>s*v[0]+east[i]*v[1]+up[i]*v[2]));},
+ };
+}
 export function project(ra, dec, view, width, height) {
  const r=Math.PI/180, a=(ra-view.ra)*r, d=dec*r, c=view.dec*r;
  const z=Math.sin(c)*Math.sin(d)+Math.cos(c)*Math.cos(d)*Math.cos(a);

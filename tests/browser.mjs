@@ -2,7 +2,7 @@ import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {project} from '../src/game.js';
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE||undefined});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
@@ -11,9 +11,9 @@ try{
  const box=await page.locator('#sky').boundingBox(),q=project(s.ra,s.dec,{ra:84,dec:2,fov:76},box.width,box.height);
  await page.mouse.click(box.x+q[0],box.y+q[1]);assert.equal(await page.evaluate(()=>document.activeElement.id),'guess');
  await page.keyboard.press('Escape');assert.ok(await page.locator('#guess-form').isHidden());await page.mouse.click(box.x+q[0],box.y+q[1]);
- await page.locator('#guess').fill('wrong');await page.locator('.submit').click();assert.match(await page.locator('#feedback').textContent(),/Not quite/);assert.equal(await page.locator('#score').textContent(),'0');
- await page.locator('#guess').fill('Betelguese');await page.locator('.submit').click();assert.match(await page.locator('#feedback').textContent(),/So close/);assert.equal(await page.locator('#score').textContent(),'0');
- await page.locator('#guess').fill('BETELGEUSE');await page.locator('.submit').click();assert.equal(await page.locator('#score').textContent(),'1');assert.equal(await page.locator('#star-kind').textContent(),'Betelgeuse');assert.ok(await page.locator('.guess-input').isHidden());
+ await page.locator('#guess').fill('wrong');await page.locator('#guess-form .submit').click();assert.match(await page.locator('#feedback').textContent(),/Not quite/);assert.equal(await page.locator('#score').textContent(),'0');
+ await page.locator('#guess').fill('Betelguese');await page.locator('#guess-form .submit').click();assert.match(await page.locator('#feedback').textContent(),/So close/);assert.equal(await page.locator('#score').textContent(),'0');
+ await page.locator('#guess').fill('BETELGEUSE');await page.locator('#guess-form .submit').click();assert.equal(await page.locator('#score').textContent(),'1');assert.equal(await page.locator('#star-kind').textContent(),'Betelgeuse');assert.ok(await page.locator('.guess-input').isHidden());
  await page.reload();await page.waitForSelector('#loading',{state:'detached'});assert.equal(await page.locator('#score').textContent(),'1');
  await page.locator('#sky').focus();await page.keyboard.press('+');
  await page.mouse.click(box.x+q[0],box.y+q[1]);

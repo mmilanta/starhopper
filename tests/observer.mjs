@@ -1,0 +1,50 @@
+import {chromium} from '@playwright/test';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE||undefined});
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ const ready=()=>page.waitForSelector('#loading',{state:'detached'});
+ await page.goto(process.env.TEST_URL||'http://localhost:5173');await ready();
+ await page.locator('#observer').click();await page.locator('#latitude').fill('47');await page.locator('#month').selectOption('1');
+ await page.locator('#observer-form .submit').click();
+ assert.ok(await page.locator('#observer-dialog').isHidden());
+ assert.match(await page.locator('#coordinates').textContent(),/05h 38m\s+\+47°/);
+ assert.equal(await page.locator('#view-context').textContent(),'47°N · January · 10 PM');
+ const zenithCaption=await page.locator('#coordinates').textContent();
+ await page.locator('#sky').focus();
+ for(let i=0;i<5;i++)await page.keyboard.press('ArrowUp');
+ assert.equal(await page.locator('#coordinates').textContent(),zenithCaption,'upward panning stops at the chosen zenith');
+ for(let i=0;i<5;i++)await page.keyboard.press('ArrowDown');
+ await page.keyboard.press('ArrowRight');
+ assert.doesNotMatch(await page.locator('#coordinates').textContent(),/05h 38m/);
+ for(let i=0;i<20;i++)await page.keyboard.press('ArrowUp');
+ assert.equal(await page.locator('#coordinates').textContent(),zenithCaption,'the upper limit remains the zenith after horizontal panning');
+ // Mouse dragging shares the same rotated navigation frame and limits.
+ const box=await page.locator('#sky').boundingBox(),x=box.x+box.width/2,y=box.y+box.height/2;
+ await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x,y-150,{steps:5});await page.mouse.up();
+ assert.notEqual(await page.locator('#coordinates').textContent(),zenithCaption);
+ await page.mouse.move(x,y-150);await page.mouse.down();await page.mouse.move(x,y+150,{steps:5});await page.mouse.up();
+ assert.equal(await page.locator('#coordinates').textContent(),zenithCaption);
+ // Result navigation must convert catalogue coordinates into the new frame.
+ await page.locator('#done').click();await page.locator('.result[data-star="Sirius"]').click();
+ assert.match(await page.locator('#coordinates').textContent(),/06h 45m\s+-17°/);
+ assert.equal(await page.locator('#star-kind').textContent(),'Sirius');
+ await page.locator('#sky').focus();for(let i=0;i<70;i++)await page.keyboard.press('ArrowUp');
+ assert.equal(await page.locator('#coordinates').textContent(),zenithCaption);
+ await page.locator('#done').click();
+ await page.reload();await ready();assert.match(await page.locator('#coordinates').textContent(),/05h 38m\s+\+47°/);
+ await page.setViewportSize({width:390,height:844});await page.locator('#observer').click();
+ await page.locator('#latitude').fill('-33.5');await page.locator('#month').selectOption('7');await page.locator('#observer-form .submit').click();
+ assert.equal(await page.locator('#view-context').textContent(),'33.5°S · July · 10 PM');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.screenshot({path:'/tmp/starhopper-observer-mobile.png'});
+ await page.locator('#observer').click();await page.locator('#latitude').fill('91');await page.locator('#observer-form .submit').click();
+ assert.ok(await page.locator('#observer-dialog').isVisible());
+ await page.locator('#latitude').fill('-90');await page.locator('#observer-form .submit').click();assert.match(await page.locator('#coordinates').textContent(),/-90°/);
+ await page.locator('#done').click();page.once('dialog',d=>d.accept());await page.locator('#restart').click();assert.match(await page.locator('#coordinates').textContent(),/-90°/);
+ await page.evaluate(()=>localStorage.setItem('starhopper.observer','{"latitude":999,"month":0}'));
+ await page.reload();await ready();assert.match(await page.locator('#coordinates').textContent(),/05h 36m\s+\+2°/);
+ assert.deepEqual(errors,[]);
+ console.log('Observer checks passed: zenith, seasons, hemispheres, poles, persistence, restart, validation and mobile layout.');
+}finally{await browser.close();}

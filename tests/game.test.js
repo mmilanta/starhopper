@@ -1,8 +1,47 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {normalize,matches,isNearMiss,readProgress,project,formatMagnitude} from '../src/game.js';
+import {normalize,matches,isNearMiss,readProgress,project,formatMagnitude,observerZenith,readObserver,createSkyFrame} from '../src/game.js';
 const stars=JSON.parse(fs.readFileSync('public/data/stars.json'));
+test('seasonal zenith follows latitude, sidereal time and the annual cycle',()=>{
+ // January 15, 2000 at 22 UT: GMST is approximately 5h 38m 41s.
+ const jan=observerZenith(47,1),jul=observerZenith(-33.5,7);
+ assert.ok(Math.abs(jan.ra-84.67)<.01);
+ assert.equal(jan.dec,47);assert.equal(jul.dec,-33.5);
+ assert.ok((jul.ra-jan.ra+360)%360>175&&(jul.ra-jan.ra+360)%360<185);
+ for(const lat of [-90,0,90])for(let month=1;month<=12;month++){
+  const z=observerZenith(lat,month);
+  assert.ok(z.ra>=0&&z.ra<360);
+  assert.deepEqual(project(z.ra,z.dec,{...z,fov:76},800,600),[400,300]);
+ }
+ for(const [lat,month] of [[91,1],[NaN,1],[0,0],[0,13],[0,1.5]])assert.throws(()=>observerZenith(lat,month),RangeError);
+});
+test('observer frame moves the navigation pole and preserves the whole sky',()=>{
+ for(const latitude of [-90,-33.5,0,47,90])for(const month of [1,6,12]){
+  const zenith=observerZenith(latitude,month),frame=createSkyFrame(zenith);
+  assert.ok(Math.abs(frame.toLocal(zenith.ra,zenith.dec).dec-90)<1e-10);
+  assert.ok(Math.abs(frame.toLocal((zenith.ra+180)%360,-zenith.dec).dec+90)<1e-10);
+  const north=frame.toLocal(0,90);
+  assert.ok(Math.abs(north.dec-latitude)<1e-10,'the celestial pole is no longer the upper pan limit');
+  for(const star of stars){
+   const local=frame.toLocal(star.ra,star.dec),back=frame.toEquatorial(local.ra,local.dec);
+   assert.ok(Math.abs(((back.ra-star.ra+540)%360)-180)<1e-8);
+   assert.ok(Math.abs(back.dec-star.dec)<1e-8);
+   const centered=project(local.ra,local.dec,{...local,fov:76},800,600);
+   assert.ok(Math.abs(centered[0]-400)<1e-8&&Math.abs(centered[1]-300)<1e-8);
+  }
+ }
+ const frame=createSkyFrame(observerZenith(47,1));
+ // Local south/east on the horizon are perpendicular to the zenith.
+ assert.ok(Math.abs(frame.toLocal(observerZenith(47,1).ra,47-90).dec)<1e-10);
+ assert.deepEqual(createSkyFrame(null).toLocal(84,2),{ra:84,dec:2});
+});
+test('observer settings validate saved values and tolerate unavailable storage',()=>{
+ for(const value of ['broken','null','{}','{"latitude":91,"month":1}','{"latitude":"47","month":1}'])assert.equal(readObserver({getItem:()=>value}),null);
+ assert.equal(readObserver(),null);
+ assert.equal(readObserver({getItem:()=>{throw Error('blocked');}}),null);
+ assert.deepEqual(readObserver({getItem:()=>'{"latitude":-33.5,"month":6}'}),{latitude:-33.5,month:6});
+});
 test('magnitude shows meaningful ranges and otherwise the catalogue value',()=>{
  assert.equal(formatMagnitude({mag:1.2,magRange:[0,1.6]}),'mag 0.00–1.60');
  assert.equal(formatMagnitude({mag:1.2,magRange:[1.1,1.2]}),'mag 1.20');

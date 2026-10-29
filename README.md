@@ -14,6 +14,7 @@ Open http://localhost:5173. `npm run build` creates the static site in `dist`; `
 ## Controls
 
 - Drag or use arrow keys with the sky focused to pan; scroll, pinch, or use +/− to zoom.
+- **Zenith** opens observer settings. Enter latitude (positive north, negative south) and choose a month, then select **Set navigation zenith**. This rotates the navigation sphere: upward panning stops at your zenith, downward panning stops at your nadir, and horizontal panning turns around this new vertical axis. The seasonal preview uses the 15th at 10 pm local mean solar time, without time zones or daylight saving. A cross marks the zenith; panning and star selection still work across the full sphere. The view starts at the zenith, and coordinate readouts continue to show equatorial RA/Dec. Settings persist across reloads and restarts.
 - Click a named star to guess. Unnamed background stars are scenery.
 - On a focused sky, Tab cycles visible named stars; Enter focuses the answer field; Escape leaves the sky controls. Shift+Tab also moves focus out.
 - Correct names are accent-, case-, punctuation-, and space-insensitive. Official alternative spellings are accepted; arbitrary typos are not, but a guess within one or two letters of the name gets a “So close” hint (no point).
@@ -32,7 +33,7 @@ Background stars (to magnitude 6) and constellation lines come from [D3 Celestia
 
 ## Scope
 
-Static J2000 equatorial positions with a perspective projection, including both hemispheres. This is an educational star map, not a location/time-aware planetarium. Star size, opacity, and glow follow a compressed exponential magnitude response shared by named and background stars. Zooming reveals faint stars more clearly; selection hit areas remain generous regardless of rendered size. Faint named stars retain a small minimum display size; non-visual objects are represented as map markers. Names for close components can occupy essentially the same point. Constellation lines appear only in reveal mode and remain hidden while guessing.
+Static J2000 equatorial positions with a perspective projection, including both hemispheres. Observer settings provide an approximate seasonal zenith using J2000 mean sidereal time ([USNO formula](https://aa.usno.navy.mil/faq/GAST)), with declination equal to latitude. The representative year is 2000 to match the catalogue equinox; this is an educational preview rather than a precise live planetarium. Star size, opacity, and glow follow a compressed exponential magnitude response shared by named and background stars. Zooming reveals faint stars more clearly; selection hit areas remain generous regardless of rendered size. Faint named stars retain a small minimum display size; non-visual objects are represented as map markers. Names for close components can occupy essentially the same point. Constellation lines appear only in reveal mode and remain hidden while guessing.
 
 ## Deployment
 

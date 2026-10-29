@@ -28,12 +28,12 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; }
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button, a, input { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; cursor: pointer; }
 button:disabled { cursor: default; opacity: .5; }
 button, input, a { transition: background-color .15s, border-color .15s, color .15s; }
-button:focus-visible, a:focus-visible, canvas:focus-visible, input:focus-visible {
+button:focus-visible, a:focus-visible, canvas:focus-visible, input:focus-visible, select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
@@ -49,20 +49,21 @@ aside {
   padding: 34px 26px 24px;
   border-right: 1px solid var(--border);
 }
-.sidebar-header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-shrink: 0; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.sidebar-header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-shrink: 0; padding-bottom: 6px; }
 .app-title { flex-shrink: 0; font-size: 25px; font-weight: 600; letter-spacing: -1.3px; line-height: 1.3; margin: 0; }
 .app-title::before { content: '*'; color: var(--accent); margin-right: 10px; }
 .score { display: flex; align-items: baseline; gap: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .score strong { font-size: 12px; font-weight: 500; color: var(--accent); line-height: 1; }
 .score span { font-size: 11px; color: var(--muted); }
 .score b { font-weight: 400; }
-#journal { flex: 1; min-height: 0; overflow: auto; padding: 12px 0 18px; }
-#journal, #results { scrollbar-width: thin; scrollbar-color: #54564b transparent; }
+#journal { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; padding-top: 12px; }
+#discoveries { flex: 1; min-height: 0; overflow: auto; padding-bottom: 18px; }
+#discoveries, #results { scrollbar-width: thin; scrollbar-color: #54564b transparent; }
 .empty { padding: 40px 0; }
 .empty > span { display: block; color: var(--accent); font-size: 32px; line-height: 1; margin-bottom: 22px; }
 .empty p { font-size: 11px; margin: 0 0 10px; }
 .empty small { font-size: 10px; line-height: 1.9; color: var(--dim); }
-.discovery-heading { display: flex; justify-content: space-between; gap: 10px; padding: 2px 4px 6px; color: var(--dim); font-size: 9px; }
+.discovery-heading { display: flex; flex-shrink: 0; justify-content: space-between; gap: 10px; padding: 2px 4px 8px; border-bottom: 1px solid var(--border); color: var(--dim); font-size: 9px; }
 .discovery { width: 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 12px 4px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--green); text-align: left; font-size: 12px; }
 .discovery-identity { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; min-width: 0; }
 .discovery-magnitude { flex-shrink: 0; text-align: right; white-space: nowrap; }
@@ -92,6 +93,7 @@ canvas:active { cursor: grabbing; }
 .tool { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 2px; background: var(--background); color: var(--muted); font-size: 22px; line-height: 1; }
 .tool:hover { border-color: var(--accent); color: var(--accent); }
 .tool.active { color: var(--accent); border-color: var(--accent); background: #2d2b23; }
+.observer-tool { width: auto; padding: 0 10px; font-size: 10px; }
 #review-toggle { display: none; padding: 0; }
 #review-toggle[aria-expanded='false'] svg { transform: rotate(180deg); }
 
@@ -134,7 +136,7 @@ canvas:active { cursor: grabbing; }
 #result-search { flex-shrink: 0; width: 100%; height: 36px; margin-top: 14px; padding: 0 10px; border: 1px solid var(--border); border-radius: 2px; background: var(--surface); color: var(--text); font-size: 11px; }
 #result-search::placeholder { color: var(--dim); }
 #result-search:focus-visible { outline: none; border-color: var(--accent); }
-#review > .discovery-heading { flex-shrink: 0; padding-top: 14px; }
+#review > .discovery-heading { flex-shrink: 0; padding-top: 2px; }
 #results { flex: 1; min-height: 0; overflow: auto; }
 .result { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; width: 100%; padding: 12px 4px; background: transparent; border: 0; border-bottom: 1px solid var(--border); text-align: left; font-size: 12px; }
 .result:hover, .result[aria-current] { background: #ffffff08; }
@@ -149,6 +151,16 @@ dialog p { margin: 16px 0; font-size: 11px; line-height: 1.9; color: var(--muted
 dialog small { font-size: 9px; line-height: 1.8; color: var(--dim); }
 dialog a { color: var(--accent); text-underline-offset: 3px; }
 #close-help { float: right; font-size: 22px; line-height: 1; }
+.observer-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.observer-heading h2 { margin: 0; }
+.dialog-close { flex-shrink: 0; font-size: 22px; line-height: 1; }
+.observer-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+#observer-form label { display: block; margin: 18px 0 8px; color: var(--text); font-size: 11px; }
+#observer-form input, #observer-form select { width: 100%; min-height: 42px; border: 1px solid var(--border); border-radius: 2px; padding: 8px 10px; background: var(--background); color: var(--text); }
+.latitude-field { position: relative; }
+#observer-form .latitude-field input { padding-right: 32px; }
+.latitude-field span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 12px; color: var(--muted); }
+#observer-form .submit { width: 100%; margin-top: 24px; }
 .guess-input.shake { animation: shake .32s ease-in-out; }
 @keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
 
@@ -186,6 +198,9 @@ dialog a { color: var(--accent); text-underline-offset: 3px; }
   .sky-caption span:first-child { font-size: 11px; }
   .sky-caption span:last-child { font-size: 7px; }
   .map-tools { top: 18px; right: 16px; }
+  .sky-caption { max-width: calc(100% - 150px); }
+  .reviewing .sky-caption { max-width: calc(100% - 194px); }
+  #observer-form input, #observer-form select { font-size: 16px; }
   .star-panel { bottom: 16px; width: min(340px, calc(100% - 30px)); }
   .panel-idle p { font-size: 11px; }
   #guess { font-size: 16px; }

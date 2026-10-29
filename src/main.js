@@ -1,17 +1,17 @@
 import './style.css';
 import {stellarColor} from './star-color.js';
-import {matches,isNearMiss,readProgress,project,starAppearance,formatMagnitude} from './game.js';
+import {matches,isNearMiss,readProgress,readObserver,observerZenith,createSkyFrame,project,starAppearance,formatMagnitude} from './game.js';
 const $=s=>document.querySelector(s);
 $('#app').innerHTML=`
 
 <main><aside><div class="sidebar-header"><h1 class="app-title">Starhopper</h1>
 <div class="score" aria-label="Named stars"><strong id="score">0</strong><span>/ <b class="total">—</b></span></div></div>
 
-<div id="journal" aria-label="Named stars"><div class="empty"><span>✧</span><p>Your first discovery awaits.</p><small>Select a star and give it a name.<br>It will find a home here.</small></div></div>
+<div id="journal" aria-label="Named stars"><div class="empty"><span>✧</span><p>Your first discovery awaits.</p><small>Select a star and guess its name.</small></div></div>
 <section id="review" hidden aria-label="Star results"><input id="result-search" type="search" aria-label="Search stars" placeholder="Search stars" autocomplete="off"><div class="discovery-heading"><span>Star</span><span>Magnitude</span></div><div id="results"></div></section>
 <footer class="action-footer"><div class="sidebar-actions"><div class="session-actions"><button id="done" class="done-button" disabled>Done · reveal sky</button><button id="restart" class="restart-button" hidden>Restart</button><button id="help" class="quiet" aria-label="How to play">[?]</button></div><span id="save-status" role="status" hidden></span></div></footer></aside>
-<section class="observatory" aria-label="Interactive night sky"><canvas id="sky" tabindex="0" aria-label="Night sky. Drag or use arrow keys to look around. Scroll or use plus and minus to zoom. Tab selects the next visible named star."></canvas><div class="map-tools"><button id="review-toggle" class="tool" aria-controls="review" aria-expanded="true" aria-label="Hide star list" title="Hide star list"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.25 8 5.75l4.5 4.5"/></svg></button><button id="grid" class="tool" aria-pressed="false" title="Toggle coordinate grid">⊞</button></div>
-<div class="sky-caption"><span id="coordinates">05h 36m &nbsp; +02°</span><span>J2000 · EQUATORIAL VIEW</span></div>
+<section class="observatory" aria-label="Interactive night sky"><canvas id="sky" tabindex="0" aria-label="Night sky. Drag or use arrow keys to look around. Scroll or use plus and minus to zoom. Tab selects the next visible named star."></canvas><div class="map-tools"><button id="observer" class="tool observer-tool" aria-haspopup="dialog" title="Set observer zenith" disabled>Zenith</button><button id="review-toggle" class="tool" aria-controls="review" aria-expanded="true" aria-label="Hide star list" title="Hide star list"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.25 8 5.75l4.5 4.5"/></svg></button><button id="grid" class="tool" aria-pressed="false" title="Toggle coordinate grid">⊞</button></div>
+<div class="sky-caption"><span id="coordinates">05h 36m &nbsp; +02°</span><span id="view-context">J2000 · EQUATORIAL VIEW</span></div>
 <div class="star-panel">
 <div id="selection" class="panel-idle"><span aria-hidden="true">✦</span><p id="selection-description">Click on a star and name it</p></div>
 <form id="guess-form" hidden>
@@ -20,7 +20,11 @@ $('#app').innerHTML=`
 <p id="feedback" role="status" aria-live="polite"></p>
 </form></div>
 <div id="loading" role="status">Charting the stars…</div></section></main>
-<dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star and enter its proper name to reveal its label.</p><p>All <span class="total">—</span> catalogue names are included, even stars too faint to see with the naked eye. Their minimum display size is enlarged so you can select them.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each star can be named once. Progress stays in this browser. Choose Done to review all stars from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible stars, Enter to type a guess, or Escape to leave the sky.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky, not a live view from your location.</small></dialog>`;
+<dialog id="observer-dialog" aria-labelledby="observer-title"><div class="observer-heading"><h2 id="observer-title">Set Zenith</h2><button id="close-observer" class="quiet dialog-close" aria-label="Close observer settings">×</button></div>
+<form id="observer-form"><div class="observer-fields"><div><label for="latitude">Observer latitude</label><div class="latitude-field"><input id="latitude" type="number" min="-90" max="90" step="any" value="47" required><span>°</span></div></div>
+<div><label for="month">Month</label><select id="month">${['January','February','March','April','May','June','July','August','September','October','November','December'].map((name,i)=>`<option value="${i+1}">${name}</option>`).join('')}</select></div></div>
+<button class="submit" type="submit">Set navigation zenith</button></form></dialog>
+<dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star and enter its proper name to reveal its label.</p><p>All <span class="total">—</span> catalogue names are included, even stars too faint to see with the naked eye. Their minimum display size is enlarged so you can select them.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each star can be named once. Progress stays in this browser. Choose Done to review all stars from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible stars, Enter to type a guess, or Escape to leave the sky.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky. Use Zenith to set the navigation pole for your latitude and month at 10 pm.</small></dialog>`;
 $('#help').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 async function start(){
  const [stars,bg,lines]=await Promise.all(['stars','background','constellations'].map(async name=>{const response=await fetch(`${import.meta.env.BASE_URL}data/${name}.json`);if(!response.ok)throw Error('Catalogue unavailable');return response.json();}));
@@ -31,25 +35,51 @@ async function start(){
   return Math.hypot(delta*Math.cos(dec*Math.PI/180),s.dec-dec)<.015;
  }));
  let storage;try{storage=window.localStorage;}catch{}
- const found=readProgress(storage,stars), view={ra:84,dec:2,fov:76};
+ const found=readProgress(storage,stars);
+ let observer=readObserver(storage);
+ let skyFrame=createSkyFrame(observer?observerZenith(observer.latitude,observer.month):null);
+ const initialView=()=>({...(observer?{ra:0,dec:90}:{ra:84,dec:2}),fov:76});
+ const view=initialView();
  let reviewing=false;try{reviewing=storage?.getItem('starhopper.review')==='true';}catch{}
  let selected=null,hovered=null,pulse=null,visible=[],showGrid=false,w=0,h=0,keyboardIndex=0,frame=0,flight=0;
  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
  const canvas=$('#sky'),ctx=canvas.getContext('2d');
  const emptyJournal=$('#journal').innerHTML;
+ function observerContext(){
+  $('#view-context').textContent=observer?`${Math.abs(observer.latitude)}°${observer.latitude<0?'S':'N'} · ${$('#month').options[observer.month-1].text} · 10 PM`:'J2000 · EQUATORIAL VIEW';
+ }
+ $('#latitude').value=observer?.latitude??47;
+ $('#month').value=observer?.month??new Date().getMonth()+1;
+ $('#observer').disabled=false;
+ $('#observer').onclick=()=>$('#observer-dialog').showModal();
+ $('#close-observer').onclick=()=>$('#observer-dialog').close();
+ $('#observer-form').onsubmit=e=>{
+  e.preventDefault();
+  observer={latitude:Number($('#latitude').value),month:Number($('#month').value)};
+  try{storage?.setItem('starhopper.observer',JSON.stringify(observer));}catch{
+   $('#save-status').hidden=false;$('#save-status').textContent='Settings are session-only; storage unavailable';
+  }
+  stopFlight();skyFrame=createSkyFrame(observerZenith(observer.latitude,observer.month));Object.assign(view,initialView());observerContext();close();
+  $('#observer-dialog').close();canvas.focus({preventScroll:true});
+ };
+ observerContext();
  const starDetail=s=>[s.bayer || `${s.designation} · ${s.constellation}`, formatMagnitude(s)].filter(Boolean).join(' · ');
  function update(){
   $('#score').textContent=found.size;document.querySelectorAll('.total').forEach(el=>el.textContent=stars.length);
   if(!found.size)$('#journal').innerHTML=emptyJournal;
-  if(found.size){$('#journal').replaceChildren();const heading=document.createElement('div');heading.className='discovery-heading';const starHeading=document.createElement('span'),magnitudeHeading=document.createElement('span');starHeading.textContent='Star';magnitudeHeading.textContent='Magnitude';heading.append(starHeading,magnitudeHeading);$('#journal').append(heading);[...found].reverse().forEach(id=>{const s=stars.find(s=>s.id===id);const b=document.createElement('button');b.className='discovery';const identity=document.createElement('span');identity.className='discovery-identity';const name=document.createElement('span');name.textContent=s.name;const detail=document.createElement('small');detail.textContent=s.bayer || `${s.designation} · ${s.constellation}`;identity.append(name,detail);const magnitude=document.createElement('small');magnitude.className='discovery-magnitude';magnitude.textContent=formatMagnitude(s).replace(/^mag /,'');b.append(identity,magnitude);b.onclick=()=>{flyTo(s.ra,s.dec);choose(s);};$('#journal').append(b);});}
+  if(found.size){$('#journal').replaceChildren();const heading=document.createElement('div');heading.className='discovery-heading';const starHeading=document.createElement('span'),magnitudeHeading=document.createElement('span');starHeading.textContent='Star';magnitudeHeading.textContent='Magnitude';heading.append(starHeading,magnitudeHeading);const entries=document.createElement('div');entries.id='discoveries';$('#journal').append(heading,entries);[...found].reverse().forEach(id=>{const s=stars.find(s=>s.id===id);const b=document.createElement('button');b.className='discovery';const identity=document.createElement('span');identity.className='discovery-identity';const name=document.createElement('span');name.textContent=s.name;const detail=document.createElement('small');detail.textContent=s.bayer || `${s.designation} · ${s.constellation}`;identity.append(name,detail);const magnitude=document.createElement('small');magnitude.className='discovery-magnitude';magnitude.textContent=formatMagnitude(s).replace(/^mag /,'');b.append(identity,magnitude);b.onclick=()=>{flyTo(s.ra,s.dec);choose(s);};entries.append(b);});}
  }
- const p=(ra,dec)=>project(ra,dec,view,w,h);
+ const p=(ra,dec)=>{const local=skyFrame.toLocal(ra,dec);return project(local.ra,local.dec,view,w,h);};
  function path(coords,color){ctx.beginPath();let last=null;for(const [ra,dec] of coords){const q=p(ra,dec);if(q && last && Math.hypot(q[0]-last[0],q[1]-last[1])<w)ctx.lineTo(...q);else if(q)ctx.moveTo(...q);last=q;}ctx.strokeStyle=color;ctx.lineWidth=.7;ctx.stroke();}
  // Continuous input (drag, wheel, hover) coalesces into one paint per frame.
  function draw(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;render();});}
  function render(){
   cancelAnimationFrame(frame);frame=0;
   ctx.clearRect(0,0,w,h);visible=[];
+  if(observer){
+   const zenith=observerZenith(observer.latitude,observer.month),q=p(zenith.ra,zenith.dec);
+   if(q){ctx.strokeStyle='#e5bd7766';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-7,q[1]);ctx.lineTo(q[0]+7,q[1]);ctx.moveTo(q[0],q[1]-7);ctx.lineTo(q[0],q[1]+7);ctx.stroke();}
+  }
   if(showGrid){for(let ra=0;ra<360;ra+=15)path(Array.from({length:91},(_,i)=>[ra,-90+i*2]),'#21323f');for(let dec=-75;dec<=75;dec+=15)path(Array.from({length:181},(_,i)=>[i*2,dec]),'#21323f');}
   if(reviewing)for(const line of lines.features)for(const segment of line.geometry.coordinates)path(segment,'#344c5d');
   // Use the same magnitude response for catalogue stars and background stars.
@@ -91,11 +121,13 @@ async function start(){
    if(Math.abs(box.y-(q[1]-8))>10){ctx.beginPath();ctx.moveTo(...q);ctx.lineTo(box.x-3,box.y-4);ctx.strokeStyle=found.has(s.id)?'#a9e9ce55':'#f5a96455';ctx.lineWidth=.6;ctx.stroke();}
    ctx.fillStyle=color;ctx.strokeStyle='#111415';ctx.lineWidth=3;ctx.strokeText(s.name,box.x,box.y);ctx.fillText(s.name,box.x,box.y);
   }
-  const coordinates=`${String(Math.floor(view.ra/15)).padStart(2,'0')}h ${String(Math.floor(view.ra%15*4)).padStart(2,'0')}m   ${view.dec>=0?'+':''}${view.dec.toFixed(0)}°`;
+  const center=skyFrame.toEquatorial(view.ra,view.dec);
+  const coordinates=`${String(Math.floor(center.ra/15)).padStart(2,'0')}h ${String(Math.floor(center.ra%15*4)).padStart(2,'0')}m   ${center.dec>=0?'+':''}${center.dec.toFixed(0)}°`;
   if($('#coordinates').textContent!==coordinates)$('#coordinates').textContent=coordinates;
  }
  function resize(){w=canvas.clientWidth;h=canvas.clientHeight;const dpr=Math.min(devicePixelRatio,2);canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);render();}new ResizeObserver(resize).observe(canvas);
  function flyTo(ra,dec,fov=view.fov){
+  ({ra,dec}=skyFrame.toLocal(ra,dec));
   cancelAnimationFrame(flight);flight=0;
   const from={...view},dra=((ra-from.ra+540)%360)-180,ddec=dec-from.dec;
   if(reducedMotion.matches){Object.assign(view,{ra:(ra+360)%360,dec,fov});render();return;}
@@ -159,7 +191,7 @@ async function start(){
  $('#result-search').addEventListener('input',filterResults);
  $('#restart').onclick=()=>{
   if(!confirm('Restart? This clears all your discoveries and resets your score.'))return;
-  stopFlight();found.clear();pulse=null;keyboardIndex=0;Object.assign(view,{ra:84,dec:2,fov:76});
+  stopFlight();found.clear();pulse=null;keyboardIndex=0;Object.assign(view,initialView());
   try{storage?.removeItem('starhopper.discovered');}catch{$('#save-status').hidden=false;$('#save-status').textContent='Progress is session-only; storage unavailable';}
   update();setReview(false);
  };
