@@ -1,8 +1,21 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {normalize,matches,isNearMiss,readProgress,project,formatMagnitude,observerZenith,readObserver,createSkyFrame} from '../src/game.js';
+import {normalize,matches,isNearMiss,readProgress,project,formatMagnitude,observerZenith,eclipticCoordinates,readObserver,createSkyFrame} from '../src/game.js';
 const stars=JSON.parse(fs.readFileSync('public/data/stars.json'));
+test('J2000 ecliptic passes through equinoxes and reaches the obliquity at solstices',()=>{
+ const obliquity=84381.406/3600;
+ for(const [longitude,ra,dec] of [[0,0,0],[90,90,obliquity],[180,180,0],[270,270,-obliquity],[360,0,0]]){
+  const point=eclipticCoordinates(longitude);
+  assert.ok(Math.abs(((point.ra-ra+540)%360)-180)<1e-10);
+  assert.ok(Math.abs(point.dec-dec)<1e-10);
+ }
+ const r=Math.PI/180,e=obliquity*r;
+ for(let longitude=0;longitude<=360;longitude++){
+  const {ra,dec}=eclipticCoordinates(longitude),a=ra*r,d=dec*r;
+  assert.ok(Math.abs(-Math.sin(e)*Math.cos(d)*Math.sin(a)+Math.cos(e)*Math.sin(d))<1e-12,'all samples lie in the ecliptic plane');
+ }
+});
 test('seasonal zenith follows latitude, sidereal time and the annual cycle',()=>{
  // January 15, 2000 at 22 UT: GMST is approximately 5h 38m 41s.
  const jan=observerZenith(47,1),jul=observerZenith(-33.5,7);

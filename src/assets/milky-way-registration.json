@@ -1,0 +1,20 @@
+{
+  "source": "https://cdn.eso.org/images/large/eso0932a.jpg",
+  "measurementSize": [1600, 800],
+  "method": "Least-squares rigid rotation of catalogue unit vectors onto photographed landmark directions. Source pixels measured after resizing the 6000x3000 panorama to 1600x800. Pixel centers are (x+0.5,y+0.5), longitude increases leftward. Residuals are below 0.3 degrees; this is an approximate photographic backdrop, not an astrometric survey.",
+  "landmarks": [
+    {"star": "Sirius", "pixel": [1403, 441]},
+    {"star": "Canopus", "pixel": [1249, 508]},
+    {"star": "Arcturus", "pixel": [730, 86]},
+    {"star": "Vega", "pixel": [511, 315]},
+    {"star": "Capella", "pixel": [91, 388]},
+    {"star": "Procyon", "pixel": [1466, 345]},
+    {"star": "Achernar", "pixel": [1113, 654]},
+    {"star": "Altair", "pixel": [603, 437]},
+    {"star": "Aldebaran", "pixel": [1607, 497]},
+    {"star": "Antares", "pixel": [849, 323]},
+    {"star": "Spica", "pixel": [1012, 165]},
+    {"star": "Pollux", "pixel": [1562, 302]},
+    {"star": "Deneb", "pixel": [439, 394]}
+  ]
+}

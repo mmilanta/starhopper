@@ -31,6 +31,12 @@ export function observerZenith(latitude, month) {
  const days=(Date.UTC(2000,month-1,15,22)-Date.UTC(2000,0,1,12))/86400000;
  return {ra:((280.46061837+360.98564736629*days)%360+360)%360,dec:latitude};
 }
+// Mean J2000 ecliptic, consistent with the catalogue's fixed equatorial frame.
+// IAU 2006 obliquity: 84381.406 arcseconds (IERS Conventions 2010, chapter 5).
+export function eclipticCoordinates(longitude){
+ const r=Math.PI/180,l=longitude*r,e=84381.406/3600*r;
+ return {ra:(Math.atan2(Math.cos(e)*Math.sin(l),Math.cos(l))/r+360)%360,dec:Math.asin(Math.sin(e)*Math.sin(l))/r};
+}
 export function readObserver(storage) {
  try {
   const value=JSON.parse(storage?.getItem('starhopper.observer')||'null');

@@ -1,6 +1,8 @@
 import './style.css';
 import {stellarColor} from './star-color.js';
-import {matches,isNearMiss,readProgress,readObserver,observerZenith,createSkyFrame,project,starAppearance,formatMagnitude} from './game.js';
+import {loadPhotographicSky} from './sky-background.js';
+import milkyWayUrl from './assets/milky-way-eso.webp';
+import {matches,isNearMiss,readProgress,readObserver,observerZenith,eclipticCoordinates,createSkyFrame,project,starAppearance,formatMagnitude} from './game.js';
 const $=s=>document.querySelector(s);
 $('#app').innerHTML=`
 
@@ -19,7 +21,7 @@ $('#app').innerHTML=`
 <div class="guess-input"><div class="guess-field"><input id="guess" aria-label="Star name" aria-describedby="guess-magnitude" placeholder="Star name" autocomplete="off" spellcheck="false" required><span id="guess-magnitude"></span></div><button class="submit" type="submit">Name star</button></div>
 <p id="feedback" role="status" aria-live="polite"></p>
 </form></div>
-<div id="loading" role="status">Charting the stars…</div></section></main>
+<a id="photo-credit" href="https://www.eso.org/public/images/eso0932a/" target="_blank" rel="noreferrer" title="Real sky photograph, softened and dimmed · CC BY 4.0" hidden>ESO/S. Brunier</a><div id="loading" role="status">Charting the stars…</div></section></main>
 <dialog id="observer-dialog" aria-labelledby="observer-title"><div class="observer-heading"><h2 id="observer-title">Set Zenith</h2><button id="close-observer" class="quiet dialog-close" aria-label="Close observer settings">×</button></div>
 <form id="observer-form"><div class="observer-fields"><div><label for="latitude">Observer latitude</label><div class="latitude-field"><input id="latitude" type="number" min="-90" max="90" step="any" value="45" required><span>°</span></div></div>
 <div><label for="month">Month</label><select id="month">${['January','February','March','April','May','June','July','August','September','October','November','December'].map((name,i)=>`<option value="${i+1}">${name}</option>`).join('')}</select></div></div>
@@ -40,10 +42,12 @@ async function start(){
  let skyFrame=createSkyFrame(observerZenith(observer.latitude,observer.month));
  const initialView=()=>({ra:0,dec:90,fov:76});
  const view=initialView();
+ const ecliptic=Array.from({length:361},(_,longitude)=>{const {ra,dec}=eclipticCoordinates(longitude);return [ra,dec];});
  let reviewing=false;try{reviewing=storage?.getItem('starhopper.review')==='true';}catch{}
  let selected=null,hovered=null,pulse=null,visible=[],showGrid=false,w=0,h=0,keyboardIndex=0,frame=0,flight=0;
  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
  const canvas=$('#sky'),ctx=canvas.getContext('2d');
+ let photographicSky=null;
  const emptyJournal=$('#journal').innerHTML;
  function observerContext(){
   $('#view-context').textContent=`${Math.abs(observer.latitude)}°${observer.latitude<0?'S':'N'} · ${$('#month').options[observer.month-1].text} · 10 PM`;
@@ -70,17 +74,22 @@ async function start(){
   if(found.size){$('#journal').replaceChildren();const heading=document.createElement('div');heading.className='discovery-heading';const starHeading=document.createElement('span'),magnitudeHeading=document.createElement('span');starHeading.textContent='Star';magnitudeHeading.textContent='Magnitude';heading.append(starHeading,magnitudeHeading);const entries=document.createElement('div');entries.id='discoveries';$('#journal').append(heading,entries);[...found].reverse().forEach(id=>{const s=stars.find(s=>s.id===id);const b=document.createElement('button');b.className='discovery';const identity=document.createElement('span');identity.className='discovery-identity';const name=document.createElement('span');name.textContent=s.name;const detail=document.createElement('small');detail.textContent=s.bayer || `${s.designation} · ${s.constellation}`;identity.append(name,detail);const magnitude=document.createElement('small');magnitude.className='discovery-magnitude';magnitude.textContent=formatMagnitude(s).replace(/^mag /,'');b.append(identity,magnitude);b.onclick=()=>{flyTo(s.ra,s.dec);choose(s);};entries.append(b);});}
  }
  const p=(ra,dec)=>{const local=skyFrame.toLocal(ra,dec);return project(local.ra,local.dec,view,w,h);};
- function path(coords,color){ctx.beginPath();let last=null;for(const [ra,dec] of coords){const q=p(ra,dec);if(q && last && Math.hypot(q[0]-last[0],q[1]-last[1])<w)ctx.lineTo(...q);else if(q)ctx.moveTo(...q);last=q;}ctx.strokeStyle=color;ctx.lineWidth=.7;ctx.stroke();}
+ function path(coords,color,lineWidth=.7){ctx.beginPath();let last=null;for(const [ra,dec] of coords){const q=p(ra,dec);if(q && last && Math.hypot(q[0]-last[0],q[1]-last[1])<w)ctx.lineTo(...q);else if(q)ctx.moveTo(...q);last=q;}ctx.strokeStyle=color;ctx.lineWidth=lineWidth;ctx.stroke();}
  // Continuous input (drag, wheel, hover) coalesces into one paint per frame.
  function draw(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;render();});}
  function render(){
   cancelAnimationFrame(frame);frame=0;
   ctx.clearRect(0,0,w,h);visible=[];
+  photographicSky?.draw(ctx,view,skyFrame,w,h);
   if(observer){
    const zenith=observerZenith(observer.latitude,observer.month),q=p(zenith.ra,zenith.dec);
    if(q){ctx.strokeStyle='#e5bd7766';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-7,q[1]);ctx.lineTo(q[0]+7,q[1]);ctx.moveTo(q[0],q[1]-7);ctx.lineTo(q[0],q[1]+7);ctx.stroke();}
   }
-  if(showGrid){for(let ra=0;ra<360;ra+=15)path(Array.from({length:91},(_,i)=>[ra,-90+i*2]),'#21323f');for(let dec=-75;dec<=75;dec+=15)path(Array.from({length:181},(_,i)=>[i*2,dec]),'#21323f');}
+  if(showGrid){
+   for(let ra=0;ra<360;ra+=15)path(Array.from({length:91},(_,i)=>[ra,-90+i*2]),'#21323f');
+   for(let dec=-75;dec<=75;dec+=15)path(Array.from({length:181},(_,i)=>[i*2,dec]),'#21323f');
+   ctx.save();ctx.setLineDash([5,6]);path(ecliptic,'#655b46',1);ctx.restore();
+  }
   if(reviewing)for(const line of lines.features)for(const segment of line.geometry.coordinates)path(segment,'#344c5d');
   // Use the same magnitude response for catalogue stars and background stars.
   function paintStar(q,mag,bv){
@@ -97,7 +106,7 @@ async function start(){
   }
   // Keep labels clear of the overlays drawn on top of the sky.
   const sky=canvas.getBoundingClientRect(),overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
-  const obstacles=[...document.querySelectorAll('.sky-caption,.map-tools,.star-panel,.sidebar-summary')].map(el=>el.getBoundingClientRect()).filter(r=>r.width).map(r=>({left:r.left-sky.left-6,right:r.right-sky.left+6,top:r.top-sky.top-6,bottom:r.bottom-sky.top+6}));
+  const obstacles=[...document.querySelectorAll('.sky-caption,.map-tools,.star-panel,.sidebar-summary,#photo-credit')].map(el=>el.getBoundingClientRect()).filter(r=>r.width).map(r=>({left:r.left-sky.left-6,right:r.right-sky.left+6,top:r.top-sky.top-6,bottom:r.bottom-sky.top+6}));
   const labelBoxes=[];
   const labelled=visible.filter(v=>reviewing||found.has(v.s.id)).sort((a,b)=>(b.s.id===selected?.id)-(a.s.id===selected?.id)||(a.s.mag??Infinity)-(b.s.mag??Infinity));
   ctx.font='11px "JetBrains Mono", monospace';
@@ -196,6 +205,7 @@ async function start(){
  };
  $('#done').disabled=false;$('#done').onclick=()=>setReview(!reviewing);
  update();setReview(reviewing);resize();$('#loading').remove();
+ loadPhotographicSky(milkyWayUrl).then(sky=>{photographicSky=sky;$('#photo-credit').hidden=false;draw();}).catch(()=>{});
  document.fonts.ready.then(draw);
 }
 start().catch(error=>{$('#loading').textContent='The sky could not load. Please refresh to try again.';console.error(error);});
