@@ -17,6 +17,35 @@ try{
  await page.locator('#guess').fill('Betelguese');await page.locator('#guess-form .submit').click();assert.match(await page.locator('#feedback').textContent(),/So close/);assert.equal(await page.locator('#score').textContent(),'0');
  await page.locator('#guess').fill('BETELGEUSE');await page.locator('#guess-form .submit').click();assert.equal(await page.locator('#score').textContent(),'1');assert.equal(await page.locator('#star-kind').textContent(),'Betelgeuse');assert.ok(await page.locator('.guess-input').isHidden());
  await page.reload();await page.waitForSelector('#loading',{state:'detached'});assert.equal(await page.locator('#score').textContent(),'1');
+ // Collapsing the sidebar frees the sky and retains a live score on all screen sizes.
+ for(const width of [1440,390,320]){
+  await page.setViewportSize({width,height:1000});
+  const before=await page.locator('#sky').boundingBox();
+  const captionBefore=await page.locator('.sky-caption').boundingBox();
+  const toggleBefore=await page.locator('#review-toggle').boundingBox();
+  assert.ok(toggleBefore.y>=captionBefore.y+captionBefore.height,'sidebar button sits below the coordinates');
+  await page.getByRole('button',{name:'Hide sidebar',exact:true}).click();
+  assert.ok(await page.locator('#sidebar').isHidden());
+  assert.ok(await page.locator('#compact-score').isVisible());
+  assert.equal((await page.locator('#compact-score').textContent()).replace(/\s/g,''),'1/652');
+  assert.equal(await page.locator('#review-toggle').getAttribute('aria-expanded'),'false');
+  await page.waitForFunction(()=>document.querySelector('#sky').clientWidth===innerWidth);
+  const after=await page.locator('#sky').boundingBox();
+  const captionAfter=await page.locator('.sky-caption').boundingBox(),scoreBox=await page.locator('#compact-score').boundingBox();
+  assert.equal(captionAfter.y-after.y,captionBefore.y-before.y,'coordinates stay at the same height');
+  assert.ok(scoreBox.y>=captionAfter.y+captionAfter.height,'compact score sits below the coordinates');
+  const toggleAfter=await page.locator('#review-toggle').boundingBox();
+  assert.ok(toggleAfter.x+toggleAfter.width<=scoreBox.x,'sidebar button is left of the score');
+  assert.equal(toggleAfter.y-after.y,toggleBefore.y-before.y,'sidebar button stays at the same height');
+  if(width>700)assert.ok(after.width>before.width);
+  else assert.ok(after.height>before.height);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.screenshot({path:`/tmp/starhopper-sidebar-hidden-${width}.png`});
+  await page.getByRole('button',{name:'Show sidebar',exact:true}).click();
+  assert.ok(await page.locator('#sidebar').isVisible());
+  assert.ok(await page.locator('#compact-score').isHidden());
+ }
+ await page.setViewportSize({width:1440,height:1000});
  await page.locator('#sky').focus();await page.keyboard.press('+');
  await page.mouse.click(box.x+q[0],box.y+q[1]);
  await page.screenshot({path:'/tmp/starhopper-desktop.png'});

@@ -12,7 +12,7 @@
   color-scheme: dark;
   --background: #171819;
   --surface: #202122;
-  --sky: #111415;
+  --sky: #07090a;
   --border: #393a36;
   --text: #e2dfd3;
   --muted: #a09f92;
@@ -90,12 +90,12 @@ canvas:active { cursor: grabbing; }
 .sky-caption span:first-child { color: var(--accent); font-size: 12px; font-variant-numeric: tabular-nums; letter-spacing: .5px; }
 .sky-caption span:last-child { color: var(--dim); font-size: 8px; letter-spacing: 1.2px; }
 .map-tools { position: absolute; top: 26px; right: 26px; display: flex; gap: 8px; }
-.tool { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 2px; background: var(--background); color: var(--muted); font-size: 22px; line-height: 1; }
-.tool:hover { border-color: var(--accent); color: var(--accent); }
-.tool.active { color: var(--accent); border-color: var(--accent); background: #2d2b23; }
-.observer-tool { width: auto; padding: 0 10px; font-size: 10px; }
-#review-toggle { display: none; padding: 0; }
-#review-toggle[aria-expanded='false'] svg { transform: rotate(180deg); }
+.tool { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid transparent; border-radius: 2px; background: transparent; color: #85877e; font-size: 22px; line-height: 1; }
+.tool:hover { color: var(--text); background: #ffffff06; }
+.tool.active { color: var(--accent); }
+.observer-tool { font-size: 14px; }
+.sidebar-collapsed main { grid-template-columns: 1fr; }
+.sidebar-summary { position: absolute; top: 76px; left: 28px; display: flex; align-items: center; gap: 12px; }
 
 /* One quiet, terminal-like shell for idle, guessing and revealed states. */
 .star-panel { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); width: min(340px, calc(100% - 48px)); min-height: 48px; padding: 10px 12px; border: 1px solid #555347; border-radius: 2px; background: #202122f5; box-shadow: 0 8px 32px #0003; }
@@ -104,7 +104,7 @@ canvas:active { cursor: grabbing; }
 .star-panel.named #guess-form { width: 100%; }
 .star-panel:has(.guess-input:not([hidden])):has(#guess-form:not([hidden])) { padding: 0; border: 0; background: transparent; box-shadow: none; }
 .panel-idle { display: flex; align-items: center; justify-content: center; gap: 13px; min-height: 26px; }
-.panel-idle > span { font-size: 20px; color: var(--accent); }
+.panel-idle > span { font-size: 20px; line-height: 1; color: var(--accent); }
 .panel-idle p { margin: 0; font-size: 12px; line-height: 1.7; }
 #guess-form { margin: 0; }
 .panel-heading { display: flex; align-items: center; }
@@ -192,14 +192,15 @@ dialog a { color: var(--accent); text-underline-offset: 3px; }
   .reviewing main { height: 100dvh; min-height: 0; }
   .reviewing aside { flex-shrink: 0; }
   .reviewing .observatory { min-height: 0; }
-  .reviewing #review-toggle { display: grid; }
-  .reviewing.review-collapsed #review { display: none; }
+  .sidebar-collapsed main { height: 100dvh; min-height: 0; }
+  .sidebar-collapsed .observatory { min-height: 0; }
+  .sidebar-summary { top: 68px; left: 18px; }
   .sky-caption { top: 20px; left: 18px; }
   .sky-caption span:first-child { font-size: 11px; }
   .sky-caption span:last-child { font-size: 7px; }
   .map-tools { top: 18px; right: 16px; }
-  .sky-caption { max-width: calc(100% - 150px); }
-  .reviewing .sky-caption { max-width: calc(100% - 194px); }
+  .sky-caption { max-width: calc(100% - 122px); }
+  .reviewing .sky-caption { max-width: calc(100% - 122px); }
   #observer-form input, #observer-form select { font-size: 16px; }
   .star-panel { bottom: 16px; width: min(340px, calc(100% - 30px)); }
   .panel-idle p { font-size: 11px; }
