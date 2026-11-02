@@ -21,7 +21,7 @@ $('#app').innerHTML=`
 </form></div>
 <div id="loading" role="status">Charting the stars…</div></section></main>
 <dialog id="observer-dialog" aria-labelledby="observer-title"><div class="observer-heading"><h2 id="observer-title">Set Zenith</h2><button id="close-observer" class="quiet dialog-close" aria-label="Close observer settings">×</button></div>
-<form id="observer-form"><div class="observer-fields"><div><label for="latitude">Observer latitude</label><div class="latitude-field"><input id="latitude" type="number" min="-90" max="90" step="any" value="47" required><span>°</span></div></div>
+<form id="observer-form"><div class="observer-fields"><div><label for="latitude">Observer latitude</label><div class="latitude-field"><input id="latitude" type="number" min="-90" max="90" step="any" value="45" required><span>°</span></div></div>
 <div><label for="month">Month</label><select id="month">${['January','February','March','April','May','June','July','August','September','October','November','December'].map((name,i)=>`<option value="${i+1}">${name}</option>`).join('')}</select></div></div>
 <button class="submit" type="submit">Set navigation zenith</button></form></dialog>
 <dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star and enter its proper name to reveal its label.</p><p>All <span class="total">—</span> catalogue names are included, even stars too faint to see with the naked eye. Their minimum display size is enlarged so you can select them.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each star can be named once. Progress stays in this browser. Choose Done to review all stars from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible stars, Enter to type a guess, or Escape to leave the sky.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky. Use Zenith to set the navigation pole for your latitude and month at 10 pm.</small></dialog>`;
@@ -36,9 +36,9 @@ async function start(){
  }));
  let storage;try{storage=window.localStorage;}catch{}
  const found=readProgress(storage,stars);
- let observer=readObserver(storage);
- let skyFrame=createSkyFrame(observer?observerZenith(observer.latitude,observer.month):null);
- const initialView=()=>({...(observer?{ra:0,dec:90}:{ra:84,dec:2}),fov:76});
+ let observer=readObserver(storage)??{latitude:45,month:new Date().getMonth()+1};
+ let skyFrame=createSkyFrame(observerZenith(observer.latitude,observer.month));
+ const initialView=()=>({ra:0,dec:90,fov:76});
  const view=initialView();
  let reviewing=false;try{reviewing=storage?.getItem('starhopper.review')==='true';}catch{}
  let selected=null,hovered=null,pulse=null,visible=[],showGrid=false,w=0,h=0,keyboardIndex=0,frame=0,flight=0;
@@ -46,10 +46,10 @@ async function start(){
  const canvas=$('#sky'),ctx=canvas.getContext('2d');
  const emptyJournal=$('#journal').innerHTML;
  function observerContext(){
-  $('#view-context').textContent=observer?`${Math.abs(observer.latitude)}°${observer.latitude<0?'S':'N'} · ${$('#month').options[observer.month-1].text} · 10 PM`:'J2000 · EQUATORIAL VIEW';
+  $('#view-context').textContent=`${Math.abs(observer.latitude)}°${observer.latitude<0?'S':'N'} · ${$('#month').options[observer.month-1].text} · 10 PM`;
  }
- $('#latitude').value=observer?.latitude??47;
- $('#month').value=observer?.month??new Date().getMonth()+1;
+ $('#latitude').value=observer.latitude;
+ $('#month').value=observer.month;
  $('#observer').disabled=false;
  $('#observer').onclick=()=>$('#observer-dialog').showModal();
  $('#close-observer').onclick=()=>$('#observer-dialog').close();

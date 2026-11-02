@@ -1,14 +1,16 @@
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {project} from '../src/game.js';
+import {project,createSkyFrame,observerZenith} from '../src/game.js';
 const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE||undefined});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ // Use a fixed seasonal view with Betelgeuse near the center for click checks.
+ await page.addInitScript(()=>localStorage.setItem('starhopper.observer',JSON.stringify({latitude:7,month:1})));
  await page.goto(process.env.TEST_URL || 'http://localhost:5173');await page.waitForSelector('#loading',{state:'detached'});
  const stars=JSON.parse(fs.readFileSync('public/data/stars.json')),s=stars.find(s=>s.name==='Betelgeuse');
- const box=await page.locator('#sky').boundingBox(),q=project(s.ra,s.dec,{ra:84,dec:2,fov:76},box.width,box.height);
+ const box=await page.locator('#sky').boundingBox(),local=createSkyFrame(observerZenith(7,1)).toLocal(s.ra,s.dec),q=project(local.ra,local.dec,{ra:0,dec:90,fov:76},box.width,box.height);
  await page.mouse.click(box.x+q[0],box.y+q[1]);assert.equal(await page.evaluate(()=>document.activeElement.id),'guess');
  await page.keyboard.press('Escape');assert.ok(await page.locator('#guess-form').isHidden());await page.mouse.click(box.x+q[0],box.y+q[1]);
  await page.locator('#guess').fill('wrong');await page.locator('#guess-form .submit').click();assert.match(await page.locator('#feedback').textContent(),/Not quite/);assert.equal(await page.locator('#score').textContent(),'0');

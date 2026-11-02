@@ -6,6 +6,18 @@ try{
  page.on('pageerror',e=>errors.push(e.message));
  const ready=()=>page.waitForSelector('#loading',{state:'detached'});
  await page.goto(process.env.TEST_URL||'http://localhost:5173');await ready();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('starhopper.observer')),null);
+ assert.match(await page.locator('#view-context').textContent(),/^45°N · /);
+ assert.match(await page.locator('#coordinates').textContent(),/\+45°/);
+ const defaultZenith=await page.locator('#coordinates').textContent();
+ await page.locator('#sky').focus();
+ for(let i=0;i<30;i++)await page.keyboard.press('ArrowUp');
+ assert.equal(await page.locator('#coordinates').textContent(),defaultZenith,'fresh browsers stop at the default 45° zenith');
+ await page.locator('#observer').click();
+ assert.equal(await page.locator('#latitude').inputValue(),'45');
+ assert.equal(await page.locator('#month').inputValue(),String(await page.evaluate(()=>new Date().getMonth()+1)));
+ await page.locator('#observer-form .submit').click();
+ assert.equal(await page.locator('#coordinates').textContent(),defaultZenith,'applying the default settings leaves the zenith unchanged');
  await page.locator('#observer').click();await page.locator('#latitude').fill('47');await page.locator('#month').selectOption('1');
  await page.locator('#observer-form .submit').click();
  assert.ok(await page.locator('#observer-dialog').isHidden());
@@ -44,7 +56,8 @@ try{
  await page.locator('#latitude').fill('-90');await page.locator('#observer-form .submit').click();assert.match(await page.locator('#coordinates').textContent(),/-90°/);
  await page.locator('#done').click();page.once('dialog',d=>d.accept());await page.locator('#restart').click();assert.match(await page.locator('#coordinates').textContent(),/-90°/);
  await page.evaluate(()=>localStorage.setItem('starhopper.observer','{"latitude":999,"month":0}'));
- await page.reload();await ready();assert.match(await page.locator('#coordinates').textContent(),/05h 36m\s+\+2°/);
+ await page.reload();await ready();assert.equal(await page.locator('#coordinates').textContent(),defaultZenith);
+ assert.match(await page.locator('#view-context').textContent(),/^45°N · /);
  assert.deepEqual(errors,[]);
  console.log('Observer checks passed: zenith, seasons, hemispheres, poles, persistence, restart, validation and mobile layout.');
 }finally{await browser.close();}
