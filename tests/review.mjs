@@ -28,9 +28,8 @@ try{
  await page.evaluate(()=>window.scrollTo(0,0));await page.locator('.result[data-star="Sirius"]').click();await page.waitForTimeout(600);
  const mobile=await page.evaluate(()=>({scrollY:scrollY,header:document.querySelector('.app-title').getBoundingClientRect().top,panel:document.querySelector('.star-panel').getBoundingClientRect().bottom,height:innerHeight}));
  assert.equal(mobile.scrollY,0);assert.ok(mobile.header>=0);assert.ok(mobile.panel<=mobile.height);
- const skyHeight=await page.locator('#sky').evaluate(el=>el.getBoundingClientRect().height);
- await page.locator('#review-toggle').click();assert.ok(await page.locator('#review').isHidden());assert.equal(await page.locator('#review-toggle').getAttribute('aria-expanded'),'false');assert.ok(await page.locator('#sky').evaluate(el=>el.getBoundingClientRect().height)>skyHeight);
- await page.locator('#review-toggle').click();assert.ok(await page.locator('#review').isVisible());assert.equal(await page.locator('#review-toggle').getAttribute('aria-expanded'),'true');
+ assert.ok(await page.locator('#review-toggle').isHidden());
+ assert.ok(await page.locator('#review').isVisible());assert.equal(await page.locator('#review-toggle').getAttribute('aria-expanded'),'true');
  await page.locator('.result[data-star="Vega"]').click();await page.locator('#done').click();assert.ok(await page.locator('#review').isHidden());assert.equal(await page.locator('#score').textContent(),'1');
  await page.evaluate(()=>window.labels=[]);await page.locator('#sky').focus();await page.keyboard.press('+');labels=await page.evaluate(()=>window.labels);assert.ok(!labels.some(l=>l.color==='#f5a964'));
  await page.locator('#done').click();assert.equal(await page.locator('#done').textContent(),'Resume');assert.ok(await page.locator('#restart').isVisible());

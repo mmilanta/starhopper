@@ -17,8 +17,8 @@ try{
  await page.locator('#guess').fill('Betelguese');await page.locator('#guess-form .submit').click();assert.match(await page.locator('#feedback').textContent(),/So close/);assert.equal(await page.locator('#score').textContent(),'0');
  await page.locator('#guess').fill('BETELGEUSE');await page.locator('#guess-form .submit').click();assert.equal(await page.locator('#score').textContent(),'1');assert.equal(await page.locator('#star-kind').textContent(),'Betelgeuse');assert.ok(await page.locator('.guess-input').isHidden());
  await page.reload();await page.waitForSelector('#loading',{state:'detached'});assert.equal(await page.locator('#score').textContent(),'1');
- // Collapsing the sidebar frees the sky and retains a live score on all screen sizes.
- for(const width of [1440,390,320]){
+ // Wide layouts retain the score and Done action when the sidebar is closed.
+ for(const width of [1440,900]){
   await page.setViewportSize({width,height:1000});
   const before=await page.locator('#sky').boundingBox();
   const captionBefore=await page.locator('.sky-caption').boundingBox();
@@ -37,13 +37,24 @@ try{
   const toggleAfter=await page.locator('#review-toggle').boundingBox();
   assert.ok(toggleAfter.x+toggleAfter.width<=scoreBox.x,'sidebar button is left of the score');
   assert.equal(toggleAfter.y-after.y,toggleBefore.y-before.y,'sidebar button stays at the same height');
-  if(width>700)assert.ok(after.width>before.width);
-  else assert.ok(after.height>before.height);
+  assert.ok(after.width>before.width);
+  const done=await page.locator('#done').boundingBox(),popup=await page.locator('.star-panel').boundingBox();
+  assert.equal(done.x-after.x,28,'Done has equal left and bottom spacing');
+  assert.equal(after.y+after.height-done.y-done.height,28);
+  assert.equal(done.y+done.height,popup.y+popup.height,'Done aligns with the star popup');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:`/tmp/starhopper-sidebar-hidden-${width}.png`});
   await page.getByRole('button',{name:'Show sidebar',exact:true}).click();
   assert.ok(await page.locator('#sidebar').isVisible());
   assert.ok(await page.locator('#compact-score').isHidden());
+ }
+ await page.locator('#review-toggle').click();
+ for(const width of [390,320]){
+  await page.setViewportSize({width,height:844});
+  await page.waitForFunction(()=>!document.querySelector('#sidebar').hidden);
+  assert.ok(await page.locator('#review-toggle').isHidden(),'mobile top bar cannot be hidden');
+  assert.ok(await page.locator('#done').isVisible());
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  }
  await page.setViewportSize({width:1440,height:1000});
  await page.locator('#sky').focus();await page.keyboard.press('+');

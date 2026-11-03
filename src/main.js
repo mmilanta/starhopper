@@ -194,7 +194,16 @@ async function start(){
   try{storage?.setItem('starhopper.review',String(value));}catch{}
   close();
  }
- $('#review-toggle').onclick=()=>{const collapsed=document.body.classList.toggle('sidebar-collapsed');$('#sidebar').hidden=collapsed;$('#compact-score').hidden=!collapsed;const label=collapsed?'Show sidebar':'Hide sidebar';$('#review-toggle').setAttribute('aria-expanded',String(!collapsed));$('#review-toggle').setAttribute('aria-label',label);$('#review-toggle').title=label;};
+ const wideLayout=window.matchMedia('(min-width: 701px)'),sessionActions=$('.session-actions');
+ const collapsedSession=document.createElement('div');collapsedSession.className='collapsed-session';$('.observatory').append(collapsedSession);
+ function setSidebarCollapsed(collapsed){
+  collapsed=collapsed&&wideLayout.matches;
+  document.body.classList.toggle('sidebar-collapsed',collapsed);$('#sidebar').hidden=collapsed;$('#compact-score').hidden=!collapsed;
+  const label=collapsed?'Show sidebar':'Hide sidebar';$('#review-toggle').setAttribute('aria-expanded',String(!collapsed));$('#review-toggle').setAttribute('aria-label',label);$('#review-toggle').title=label;
+  if(collapsed)collapsedSession.append($('#done'));else sessionActions.prepend($('#done'));
+ }
+ $('#review-toggle').onclick=()=>setSidebarCollapsed(!document.body.classList.contains('sidebar-collapsed'));
+ wideLayout.addEventListener('change',()=>{if(!wideLayout.matches)setSidebarCollapsed(false);});
  function filterResults(){const query=$('#result-search').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();document.querySelectorAll('.result').forEach(row=>{row.hidden=!row.dataset.search.includes(query);});}
  $('#result-search').addEventListener('input',filterResults);
  $('#restart').onclick=()=>{
