@@ -1,4 +1,5 @@
 import './style.css';
+import {createGuessTracker} from './analytics.js';
 import {stellarColor} from './star-color.js';
 import {loadPhotographicSky} from './sky-background.js';
 import milkyWayUrl from './assets/milky-way-eso.webp';
@@ -26,7 +27,7 @@ $('#app').innerHTML=`
 <form id="observer-form"><div class="observer-fields"><div><label for="latitude">Observer latitude</label><div class="latitude-field"><input id="latitude" type="number" min="-90" max="90" step="any" value="45" required><span>°</span></div></div>
 <div><label for="month">Month</label><select id="month">${['January','February','March','April','May','June','July','August','September','October','November','December'].map((name,i)=>`<option value="${i+1}">${name}</option>`).join('')}</select></div></div>
 <button class="submit" type="submit">Set navigation zenith</button></form></dialog>
-<dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star and enter its proper name to reveal its label.</p><p>All <span class="total">—</span> catalogue names are included, even stars too faint to see with the naked eye. Their minimum display size is enlarged so you can select them.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each star can be named once. Progress stays in this browser. Choose Done to review all stars from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible stars, Enter to type a guess, or Escape to leave the sky.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky. Use Zenith to set the navigation pole for your latitude and month at 10 pm.</small></dialog>`;
+<dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star and enter its proper name to reveal its label.</p><p>All <span class="total">—</span> catalogue names are included, even stars too faint to see with the naked eye. Their minimum display size is enlarged so you can select them.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each star can be named once. Progress stays in this browser. Choose Done to review all stars from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible stars, Enter to type a guess, or Escape to leave the sky.</p><p>Visit analytics and guess statistics are sent to GoatCounter. A random ID saved in this browser groups your guesses across visits. We collect the selected star and whether your answer was correct, close, or incorrect; we do not send the text you type. Restart keeps this ID; clearing site data removes it.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky. Use Zenith to set the navigation pole for your latitude and month at 10 pm.</small></dialog>`;
 $('#help').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 async function start(){
  const [stars,bg,lines]=await Promise.all(['stars','background','constellations'].map(async name=>{const response=await fetch(`${import.meta.env.BASE_URL}data/${name}.json`);if(!response.ok)throw Error('Catalogue unavailable');return response.json();}));
@@ -37,6 +38,8 @@ async function start(){
   return Math.hypot(delta*Math.cos(dec*Math.PI/180),s.dec-dec)<.015;
  }));
  let storage;try{storage=window.localStorage;}catch{}
+ const analytics=createGuessTracker({storage,getCounter:()=>window.goatcounter});
+ document.querySelector('#goatcounter').addEventListener('load',analytics.flush,{once:true});
  const found=readProgress(storage,stars);
  let observer=readObserver(storage)??{latitude:45,month:new Date().getMonth()+1};
  let skyFrame=createSkyFrame(observerZenith(observer.latitude,observer.month));
@@ -171,7 +174,23 @@ async function start(){
  function close(){selected=null;$('.star-panel').classList.remove('named','missed');$('#guess-form').hidden=true;$('#selection').hidden=false;render();}
  $('#guess').onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close();canvas.focus();}};
  $('.guess-input').addEventListener('animationend',()=>$('.guess-input').classList.remove('shake'));
- $('#guess-form').onsubmit=e=>{e.preventDefault();if(reviewing||!selected||found.has(selected.id))return;if(matches(selected,$('#guess').value)){found.add(selected.id);try{storage.setItem('starhopper.discovered',JSON.stringify([...found]));}catch{$('#save-status').hidden=false;$('#save-status').textContent='Progress is session-only; storage unavailable';}update();pulse={id:selected.id,start:performance.now()};choose(selected);}else{const near=isNearMiss(selected,$('#guess').value);$('#feedback').textContent=near?'So close. Check the spelling.':'Not quite. Try again.';$('#feedback').className=near?'close':'incorrect';$('#guess').setAttribute('aria-invalid','true');$('#guess').select();const field=$('.guess-input');field.classList.remove('shake');void field.offsetWidth;field.classList.add('shake');}};
+ $('#guess-form').onsubmit=e=>{
+  e.preventDefault();
+  if(reviewing||!selected||found.has(selected.id))return;
+  const guess=$('#guess').value;
+  if(!guess.trim())return;
+  const correct=matches(selected,guess),near=!correct&&isNearMiss(selected,guess);
+  analytics.recordGuess(selected,correct?'correct':near?'near-miss':'incorrect');
+  if(correct){
+   found.add(selected.id);
+   try{storage.setItem('starhopper.discovered',JSON.stringify([...found]));}catch{$('#save-status').hidden=false;$('#save-status').textContent='Progress is session-only; storage unavailable';}
+   update();pulse={id:selected.id,start:performance.now()};choose(selected);
+  }else{
+   $('#feedback').textContent=near?'So close. Check the spelling.':'Not quite. Try again.';
+   $('#feedback').className=near?'close':'incorrect';$('#guess').setAttribute('aria-invalid','true');$('#guess').select();
+   const field=$('.guess-input');field.classList.remove('shake');void field.offsetWidth;field.classList.add('shake');
+  }
+ };
  function zoom(f){view.fov=Math.max(3,Math.min(110,view.fov*f));}$('#grid').onclick=()=>{showGrid=!showGrid;$('#grid').classList.toggle('active',showGrid);$('#grid').setAttribute('aria-pressed',showGrid);render();};canvas.addEventListener('wheel',e=>{e.preventDefault();stopFlight();zoom(Math.exp(e.deltaY*.001));draw();},{passive:false});
  const pointers=new Map();let moved=false,origin=null;
  canvas.onpointerdown=e=>{stopFlight();hovered=null;canvas.style.cursor='';canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){origin={x:e.clientX,y:e.clientY};moved=false;}else moved=true;};

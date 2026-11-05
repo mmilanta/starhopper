@@ -45,3 +45,21 @@ Live at https://mmilanta.github.io/starhopper/. Every push to `main` runs tests,
 # Variable magnitudes
 
 The checked-in visual magnitude ranges are a snapshot of the [AAVSO International Variable Star Index via HEASARC](https://heasarc.gsfc.nasa.gov/W3Browse/all/aavsovsx.html), matched to catalogue stars within 5 arcseconds. The snapshot covers confirmed variables with a visual-band maximum brighter than magnitude 8 and usable visual-band bounds; other stars use the IAU catalogue's single magnitude. A single value does not imply the star is constant. Ranges smaller than 0.2 magnitude are displayed as a single catalogue value.
+
+## Analytics
+
+Pageviews go to the existing [mmilanta GoatCounter dashboard](https://mmilanta.goatcounter.com). Production pageviews appear under `/starhopper/`; GoatCounter filters localhost by default.
+
+Each submitted, nonblank guess sends one [custom event](https://www.goatcounter.com/help/events):
+
+```
+starhopper/guess/Betelgeuse/correct/player/550e8400-e29b-41d4-a716-446655440000
+```
+
+The path contains the URL-encoded catalogue star ID, outcome (`correct`, `near-miss`, or `incorrect`), and a random browser UUID. Event titles also include the readable star name, outcome, and player ID. `no_session: true` counts repeated attempts independently. Revealing stars, revisiting discoveries, restoring progress, or submitting an already solved star does not send a guess event. Typed answers are never sent.
+
+In GoatCounter, show events and filter paths by `starhopper/guess/` for all guesses, by `starhopper/guess/Betelgeuse/` for one star, or by `player/<UUID>` for one player. Select the date range to compare counts. These are event totals, not unique-player counts or a timestamped attempt history. CSV exports can be grouped by the star, outcome, and player components for further analysis. This deliberately uses event names because GoatCounter has no custom player-property field; a dedicated event database would be a better fit for large-scale player analysis.
+
+The `starhopper.player-id` localStorage entry is independent of score, so Restart keeps the player identity. Clearing site data creates a new identity, as does using another browser/device. If storage is unavailable, an in-memory ID lasts only until reload. These are pseudonymous browser IDs, not verified people. The help panel explains the collection. The player ID is only attached to guess events, not regular pageviews.
+
+Guesses made before the tracker loads are queued in memory (up to 100), then flushed on script load. Blocked analytics never prevent gameplay; blocked requests, offline visits, or closing a page before delivery can lose events. No historical guesses are backfilled and no retry loop bypasses blockers.
