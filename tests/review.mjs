@@ -1,9 +1,15 @@
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const total=JSON.parse(fs.readFileSync('public/data/stars.json')).length+JSON.parse(fs.readFileSync('public/data/deep-sky.json')).length;
 const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE||undefined});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ await page.route('https://gc.zgo.at/**',route=>route.abort());
+ await page.route('https://mmilanta.goatcounter.com/**',route=>route.abort());
+ await page.route('https://skyview.gsfc.nasa.gov/**',route=>route.abort());
+ await page.route('**/hips-image-services/hips2fits?**',route=>route.abort());
  await page.addInitScript(()=>{
   window.labels=[];
   const original=CanvasRenderingContext2D.prototype.fillText;
@@ -12,9 +18,9 @@ try{
  await page.goto(process.env.TEST_URL || 'http://localhost:5173');await page.waitForSelector('#loading',{state:'detached'});
  await page.evaluate(()=>localStorage.setItem('starhopper.discovered',JSON.stringify(['Vega'])));
  await page.reload();await page.waitForSelector('#loading',{state:'detached'});
- await page.locator('#done').click();assert.equal(await page.locator('.result').count(),652);
+ await page.locator('#done').click();assert.equal(await page.locator('.result').count(),total);
  await page.locator('#result-search').fill('α-CMa');assert.equal(await page.locator('.result:visible').count(),1);assert.equal(await page.locator('.result:visible').getAttribute('data-star'),'Sirius');await page.locator('#result-search').fill('');
- assert.equal(await page.locator('.result.got').count(),1);assert.equal(await page.locator('.result.missed').count(),651);
+ assert.equal(await page.locator('.result.got').count(),1);assert.equal(await page.locator('.result.missed').count(),total-1);
  const mags=await page.locator('.result').evaluateAll(rows=>rows.map(row=>row.dataset.mag));const numbers=mags.filter(Boolean).map(Number);assert.deepEqual(numbers,[...numbers].sort((a,b)=>a-b));assert.equal(mags.at(-1),'');
  await page.evaluate(()=>window.labels=[]);await page.locator('.result[data-star="Vega"]').click();
  assert.equal(await page.locator('#star-kind').textContent(),'Vega');assert.ok(await page.locator('.guess-input').isHidden());
@@ -36,5 +42,5 @@ try{
  page.once('dialog',dialog=>dialog.dismiss());await page.locator('#restart').click();assert.equal(await page.locator('#score').textContent(),'1');
  page.once('dialog',dialog=>dialog.accept());await page.locator('#restart').click();assert.equal(await page.locator('#score').textContent(),'0');assert.ok(await page.locator('#review').isHidden());assert.ok(await page.locator('#restart').isHidden());assert.equal(await page.locator('.discovery').count(),0);
  await page.reload();await page.waitForSelector('#loading',{state:'detached'});assert.equal(await page.locator('#score').textContent(),'0');assert.ok(await page.locator('#review').isHidden());
- assert.deepEqual(errors,[]);console.log('Review checks passed: all 652 sorted, got/missed counts, label colors, click-to-center, frozen score, persistence, mobile, resume, restart confirmation and persistence.');
+ assert.deepEqual(errors,[]);console.log('Review checks passed: all objects sorted, got/missed counts, label colors, click-to-center, frozen score, persistence, mobile, resume, restart confirmation and persistence.');
 }finally{await browser.close();}

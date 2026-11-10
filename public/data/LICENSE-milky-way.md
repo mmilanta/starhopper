@@ -11,18 +11,23 @@ License: [Creative Commons Attribution 4.0 International](https://creativecommon
 ESO usage terms: https://www.eso.org/public/outreach/copyright/
 
 This is a real photographic mosaic covering the northern and southern sky.
-The distributed image retains the 6000 × 3000 source resolution, median-filtered
-to reduce individual star points, lightly blurred and encoded as WebP. In the game it is dimmed and
-reprojected with the star catalogue, using a fitted rotation to register the
-panorama's axes. No generative image processing is used in this asset.
+The distributed `src/assets/milky-way-detail.webp` retains the 6000 × 3000
+source resolution, encoded at WebP quality 94 without median filtering or blur.
+This replaces the previous softened texture in the running app and preserves
+faint structure and photographic stars. The older softened asset is retained
+in the repository for reference. A smooth spherical correction fitted to 159 bright-star centroids rectifies local stitching offsets against the catalogue; see `milky-way-registration.json`. The panorama is displayed at 45% opacity.
+It follows the star catalogue using the existing fitted registration rotation.
+No generative image processing is used.
 
-Reproduce the texture from the source JPEG with ImageMagick:
+Reproduce the active texture and calibration metadata from the source JPEG with NumPy and Pillow:
 
 ```sh
-magick eso0932a.jpg -statistic Median 3x3 -blur 0x0.6 -quality 88 src/assets/milky-way-eso.webp
+python3 scripts/register_panorama.py eso0932a.jpg
 ```
 
+This is a sharper encoding of the same 18-megapixel source, not a
+higher-resolution astronomical survey. At high zoom, the optional DSS2 layer
+provides finer spatial detail; see `LICENSE-deep-sky.md`.
+
 The source panorama combines photographs taken over several months and includes
-some Solar System objects. Softening reduces these points but does not remove
-all of them. Angular sizes and large-scale structures are preserved; no nebulae
-are enlarged or invented.
+some Solar System objects. The panorama retains these photographic points. The registration adjusts local positions smoothly; no nebulae are enlarged for display or invented.

@@ -4,6 +4,10 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.BR
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ await page.route('https://gc.zgo.at/**',route=>route.abort());
+ await page.route('https://mmilanta.goatcounter.com/**',route=>route.abort());
+ await page.route('https://skyview.gsfc.nasa.gov/**',route=>route.abort());
+ await page.route('**/hips-image-services/hips2fits?**',route=>route.abort());
  const ready=()=>page.waitForSelector('#loading',{state:'detached'});
  await page.goto(process.env.TEST_URL||'http://localhost:5173');await ready();
  assert.equal(await page.evaluate(()=>localStorage.getItem('starhopper.observer')),null);

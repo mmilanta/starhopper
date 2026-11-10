@@ -11,8 +11,8 @@ const separation=(a,b)=>Math.acos(Math.max(-1,Math.min(1,a.reduce((s,n,i)=>s+n*b
 test('photograph registration matches measured bright stars across both hemispheres',()=>{
  for(const {star,pixel:[x,y]} of registration.landmarks){
   const s=stars.find(s=>s.name===star),actual=direction(photoCoordinates(s.ra,s.dec));
-  const expected=direction({u:(x+.5)/1600,v:(y+.5)/800});
-  assert.ok(separation(actual,expected)<.3,`${star} matches its photographed position`);
+  const expected=direction({u:(x+.5)/registration.measurementSize[0],v:(y+.5)/registration.measurementSize[1]});
+  assert.ok(separation(actual,expected)<.00001,`${star} matches its rectified photographic position`);
  }
 });
 
@@ -35,5 +35,15 @@ test('photographic camera follows catalogue projection after observer rotations,
 test('panorama coordinates remain finite and wrap for the full sphere',()=>{
  for(let ra=0;ra<=360;ra+=5)for(let dec=-90;dec<=90;dec+=5){
   const {u,v}=photoCoordinates(ra,dec);assert.ok(u>=0&&u<1&&v>=0&&v<=1);
+ }
+});
+
+
+test('panorama rectification verifies the two reported Capricorn stars in the resampled photograph',()=>{
+ for(const name of ['Deneb Algedi','Nashira']){
+  const anchor=registration.landmarks.find(a=>a.star===name);
+  assert.ok(anchor, `${name} is a measured photographic anchor`);
+  assert.ok(anchor.verifiedResidualPixels<.5, `${name} is aligned within half a source pixel`);
+  assert.ok(Math.hypot(anchor.pixel[0]-anchor.sourcePixel[0],anchor.pixel[1]-anchor.sourcePixel[1])>1, 'the original stitching displacement was corrected');
  }
 });

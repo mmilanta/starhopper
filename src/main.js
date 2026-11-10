@@ -1,38 +1,42 @@
 import './style.css';
+import {objectType,objectColor,paintDeepSkyMarker,angularOutline,projectOutline,paintOutline,outlineContains} from './deep-sky.js';
+import {createSurveySky} from './survey-sky.js';
 import {createGuessTracker} from './analytics.js';
 import {stellarColor} from './star-color.js';
 import {loadPhotographicSky} from './sky-background.js';
-import milkyWayUrl from './assets/milky-way-eso.webp';
-import {matches,isNearMiss,readProgress,readObserver,observerZenith,eclipticCoordinates,createSkyFrame,project,starAppearance,formatMagnitude} from './game.js';
+import milkyWayUrl from './assets/milky-way-detail.webp';
+import {normalize,matches,isNearMiss,readProgress,readObserver,observerZenith,eclipticCoordinates,createSkyFrame,project,starAppearance,formatMagnitude} from './game.js';
 const $=s=>document.querySelector(s);
 $('#app').innerHTML=`
 
 <main><aside id="sidebar"><div class="sidebar-header"><h1 class="app-title">Starhopper</h1>
-<div class="score" aria-label="Named stars"><strong id="score">0</strong><span>/ <b class="total">—</b></span></div></div>
+<div class="score" aria-label="Named objects"><strong id="score">0</strong><span>/ <b class="total">—</b></span></div></div>
 
-<div id="journal" aria-label="Named stars"><div class="empty"><span>✧</span><p>Your first discovery awaits.</p><small>Select a star and guess its name.</small></div></div>
-<section id="review" hidden aria-label="Star results"><input id="result-search" type="search" aria-label="Search stars" placeholder="Search stars" autocomplete="off"><div class="discovery-heading"><span>Star</span><span>Magnitude</span></div><div id="results"></div></section>
+<div id="journal" aria-label="Named objects"><div class="empty"><span>✧</span><p>Your first discovery awaits.</p><small>Select a star, nebula, galaxy or cluster and guess its name.</small></div></div>
+<section id="review" hidden aria-label="Object results"><select id="result-type" aria-label="Filter object type"><option value="all">All objects</option><option value="star">Stars</option><option value="nebula">Nebulae</option><option value="galaxy">Galaxies</option><option value="cluster">Clusters</option></select><input id="result-search" type="search" aria-label="Search objects" placeholder="Search objects" autocomplete="off"><div class="discovery-heading"><span>Object</span><span>Magnitude</span></div><div id="results"></div></section>
 <footer class="action-footer"><div class="sidebar-actions"><div class="session-actions"><button id="done" class="done-button" disabled>Done · reveal sky</button><button id="restart" class="restart-button" hidden>Restart</button><button id="help" class="quiet" aria-label="How to play">[?]</button></div><span id="save-status" role="status" hidden></span></div></footer></aside>
-<section class="observatory" aria-label="Interactive night sky"><canvas id="sky" tabindex="0" aria-label="Night sky. Drag or use arrow keys to look around. Scroll or use plus and minus to zoom. Tab selects the next visible named star."></canvas><div class="map-tools"><button id="observer" class="tool observer-tool" aria-haspopup="dialog" title="Set observer zenith" aria-label="Set observer zenith" disabled>Z</button><button id="grid" class="tool" aria-pressed="false" aria-label="Toggle coordinate grid" title="Toggle coordinate grid"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="2" width="14" height="14" rx="1"/><path d="M6.67 2v14M11.33 2v14M2 6.67h14M2 11.33h14"/></svg></button></div>
-<div class="sidebar-summary"><button id="review-toggle" class="tool" aria-controls="sidebar" aria-expanded="true" aria-label="Hide sidebar" title="Hide sidebar"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M6 2.5v11"/></svg></button><div id="compact-score" class="score" aria-label="Named stars" hidden><strong id="compact-score-value">0</strong><span>/ <b class="total">—</b></span></div></div><div class="sky-caption"><span id="coordinates">05h 36m &nbsp; +02°</span><span id="view-context">J2000 · EQUATORIAL VIEW</span></div>
+<section class="observatory" aria-label="Interactive night sky"><canvas id="sky" tabindex="0" aria-label="Night sky. Drag or use arrow keys to look around. Scroll or use plus and minus to zoom. Tab selects the next visible object."></canvas><div class="map-tools"><button id="survey" class="tool observer-tool active" aria-pressed="true" aria-label="Toggle detailed sky survey" title="DSS2 photographic detail when zoomed in">HD</button><button id="observer" class="tool observer-tool" aria-haspopup="dialog" title="Set observer zenith" aria-label="Set observer zenith" disabled>Z</button><button id="grid" class="tool" aria-pressed="false" aria-label="Toggle coordinate grid" title="Toggle coordinate grid"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="2" width="14" height="14" rx="1"/><path d="M6.67 2v14M11.33 2v14M2 6.67h14M2 11.33h14"/></svg></button></div>
+<div class="sidebar-summary"><button id="review-toggle" class="tool" aria-controls="sidebar" aria-expanded="true" aria-label="Hide sidebar" title="Hide sidebar"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M6 2.5v11"/></svg></button><div id="compact-score" class="score" aria-label="Named objects" hidden><strong id="compact-score-value">0</strong><span>/ <b class="total">—</b></span></div></div><div class="sky-caption"><span id="coordinates">05h 36m &nbsp; +02°</span><span id="view-context">J2000 · EQUATORIAL VIEW</span></div>
 <div class="star-panel">
-<div id="selection" class="panel-idle"><span aria-hidden="true">✦</span><p id="selection-description">Click on a star and name it</p></div>
+<div id="selection" class="panel-idle"><span aria-hidden="true">✦</span><p id="selection-description">Select an object and name it</p></div>
 <form id="guess-form" hidden>
 <div class="panel-heading"><div class="panel-details"><div class="panel-name"><h2 id="star-kind"></h2></div><p id="star-detail"></p></div></div>
-<div class="guess-input"><div class="guess-field"><input id="guess" aria-label="Star name" aria-describedby="guess-magnitude" placeholder="Star name" autocomplete="off" spellcheck="false" required><span id="guess-magnitude"></span></div><button class="submit" type="submit">Name star</button></div>
+<div class="guess-input"><div class="guess-field"><input id="guess" aria-label="Object name" aria-describedby="guess-magnitude" placeholder="Name" autocomplete="off" spellcheck="false" required><span id="guess-magnitude"></span></div><button class="submit" type="submit">Name object</button></div>
 <p id="feedback" role="status" aria-live="polite"></p>
 </form></div>
-<a id="photo-credit" href="https://www.eso.org/public/images/eso0932a/" target="_blank" rel="noreferrer" title="Real sky photograph, softened and dimmed · CC BY 4.0" hidden>ESO/S. Brunier</a><div id="loading" role="status">Charting the stars…</div></section></main>
+<a id="photo-credit" href="https://www.eso.org/public/images/eso0932a/" target="_blank" rel="noreferrer" title="ESO/S. Brunier panorama · CC BY 4.0" hidden>ESO/S. Brunier</a><div id="loading" role="status">Charting the stars…</div></section></main>
 <dialog id="observer-dialog" aria-labelledby="observer-title"><div class="observer-heading"><h2 id="observer-title">Set Zenith</h2><button id="close-observer" class="quiet dialog-close" aria-label="Close observer settings">×</button></div>
 <form id="observer-form"><div class="observer-fields"><div><label for="latitude">Observer latitude</label><div class="latitude-field"><input id="latitude" type="number" min="-90" max="90" step="any" value="45" required><span>°</span></div></div>
 <div><label for="month">Month</label><select id="month">${['January','February','March','April','May','June','July','August','September','October','November','December'].map((name,i)=>`<option value="${i+1}">${name}</option>`).join('')}</select></div></div>
 <button class="submit" type="submit">Set navigation zenith</button></form></dialog>
-<dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star and enter its proper name to reveal its label.</p><p>All <span class="total">—</span> catalogue names are included, even stars too faint to see with the naked eye. Their minimum display size is enlarged so you can select them.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each star can be named once. Progress stays in this browser. Choose Done to review all stars from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible stars, Enter to type a guess, or Escape to leave the sky.</p><p>Visit analytics and guess statistics are sent to GoatCounter. A random ID saved in this browser groups your guesses across visits. We collect the selected star and whether your answer was correct, close, or incorrect; we do not send the text you type. Restart keeps this ID; clearing site data removes it.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky. Use Zenith to set the navigation pole for your latitude and month at 10 pm.</small></dialog>`;
+<dialog id="help-dialog"><button id="close-help" class="quiet" aria-label="Close instructions">×</button><div class="eyebrow">WELCOME, STARGAZER</div><h2>Get to know the night.</h2><p>Drag the sky to look in any direction. Scroll or pinch to zoom. Select a star, nebula, galaxy or cluster and enter its name to reveal its label. At close zoom, nebulae follow traced photographic contours where available; other objects use catalogue size and orientation. When too small, galaxies use oval markers and nebulae use diamond markers. Open clusters use dashed circles; globular clusters use circles with a cross. Click anywhere inside an outline to select it. Deep-sky objects also accept catalogue IDs, such as M31 or NGC 224.</p><p>Explore <span class="total">—</span> objects: the complete named-star catalogue and a selection of nebulae, galaxies and star clusters. Markers stay visible for objects too faint or small to see. With HD enabled, zoom in to load real DSS2 survey photography; zoom further for finer detail. Survey images need an internet connection and load after you stop moving. If unavailable, the bundled panorama remains visible.</p><p>Accents, spaces, punctuation and capitals don’t matter. Each object can be named once. Progress stays in this browser. Choose Done to review all objects from brightest to faintest. Missed names appear in orange; click any result to center it in the sky. Return to exploring whenever you like.</p><p>Keyboard: focus the sky, use arrows to pan and + / − to zoom. Press Tab to cycle visible objects, Enter to type a guess, or Escape to leave the sky.</p><p>Visit analytics and guess statistics are sent to GoatCounter. A random ID saved in this browser groups your guesses across visits. We collect the selected object and whether your answer was correct, close, or incorrect; we do not send the text you type. Restart keeps this ID; clearing site data removes it.</p><small>Star positions: <a href="https://exopla.net/star-names/modern-iau-star-names/" target="_blank" rel="noreferrer">IAU catalogue</a>. Nebulae, galaxies and clusters: <a href="https://github.com/mattiaverga/OpenNGC" target="_blank" rel="noreferrer">OpenNGC (CC BY-SA 4.0)</a>. Survey: <a href="https://aladin.cds.unistra.fr/hips/" target="_blank" rel="noreferrer">DSS2 / STScI / CDS</a>. Background stars and constellation lines: <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noreferrer">D3 Celestial</a>. Static J2000 sky. Use Zenith to set the navigation pole for your latitude and month at 10 pm.</small></dialog>`;
 $('#help').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();
 async function start(){
- const [stars,bg,lines]=await Promise.all(['stars','background','constellations'].map(async name=>{const response=await fetch(`${import.meta.env.BASE_URL}data/${name}.json`);if(!response.ok)throw Error('Catalogue unavailable');return response.json();}));
+ const [namedStars,bg,lines,deepSky]=await Promise.all(['stars','background','constellations','deep-sky'].map(async name=>{const response=await fetch(`${import.meta.env.BASE_URL}data/${name}.json`);if(!response.ok)throw Error('Catalogue unavailable');return response.json();}));
+ const stars=[...namedStars,...deepSky];
+ const shapes=new Map(deepSky.map(object=>[object.id,angularOutline(object)]));
  // Named stars are already drawn by the game layer; don't draw them twice.
- const background=bg.features.filter(b=>!stars.some(s=>{
+ const background=bg.features.filter(b=>!namedStars.some(s=>{
   const [ra,dec]=b.geometry.coordinates;
   const delta=((s.ra-ra+540)%360)-180;
   return Math.hypot(delta*Math.cos(dec*Math.PI/180),s.dec-dec)<.015;
@@ -51,6 +55,8 @@ async function start(){
  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
  const canvas=$('#sky'),ctx=canvas.getContext('2d');
  let photographicSky=null;
+ const surveySky=createSurveySky(draw);
+ $('#survey').onclick=()=>{const enabled=$('#survey').getAttribute('aria-pressed')!=='true';$('#survey').setAttribute('aria-pressed',String(enabled));$('#survey').classList.toggle('active',enabled);surveySky.setEnabled(enabled);draw();};
  const emptyJournal=$('#journal').innerHTML;
  function observerContext(){
   $('#view-context').textContent=`${Math.abs(observer.latitude)}°${observer.latitude<0?'S':'N'} · ${$('#month').options[observer.month-1].text} · 10 PM`;
@@ -70,11 +76,11 @@ async function start(){
   $('#observer-dialog').close();canvas.focus({preventScroll:true});
  };
  observerContext();
- const starDetail=s=>[s.bayer || `${s.designation} · ${s.constellation}`, formatMagnitude(s)].filter(Boolean).join(' · ');
+ const starDetail=s=>[s.type?objectType(s):'',s.bayer || `${s.designation} · ${s.constellation}`, formatMagnitude(s)].filter(Boolean).join(' · ');
  function update(){
   $('#score').textContent=found.size;$('#compact-score-value').textContent=found.size;document.querySelectorAll('.total').forEach(el=>el.textContent=stars.length);
   if(!found.size)$('#journal').innerHTML=emptyJournal;
-  if(found.size){$('#journal').replaceChildren();const heading=document.createElement('div');heading.className='discovery-heading';const starHeading=document.createElement('span'),magnitudeHeading=document.createElement('span');starHeading.textContent='Star';magnitudeHeading.textContent='Magnitude';heading.append(starHeading,magnitudeHeading);const entries=document.createElement('div');entries.id='discoveries';$('#journal').append(heading,entries);[...found].reverse().forEach(id=>{const s=stars.find(s=>s.id===id);const b=document.createElement('button');b.className='discovery';const identity=document.createElement('span');identity.className='discovery-identity';const name=document.createElement('span');name.textContent=s.name;const detail=document.createElement('small');detail.textContent=s.bayer || `${s.designation} · ${s.constellation}`;identity.append(name,detail);const magnitude=document.createElement('small');magnitude.className='discovery-magnitude';magnitude.textContent=formatMagnitude(s).replace(/^mag /,'');b.append(identity,magnitude);b.onclick=()=>{flyTo(s.ra,s.dec);choose(s);};entries.append(b);});}
+  if(found.size){$('#journal').replaceChildren();const heading=document.createElement('div');heading.className='discovery-heading';const starHeading=document.createElement('span'),magnitudeHeading=document.createElement('span');starHeading.textContent='Object';magnitudeHeading.textContent='Magnitude';heading.append(starHeading,magnitudeHeading);const entries=document.createElement('div');entries.id='discoveries';$('#journal').append(heading,entries);[...found].reverse().forEach(id=>{const s=stars.find(s=>s.id===id);const b=document.createElement('button');b.className='discovery';const identity=document.createElement('span');identity.className='discovery-identity';const name=document.createElement('span');name.textContent=s.name;const detail=document.createElement('small');detail.textContent=s.type?`${objectType(s)} · ${s.designation}`:s.bayer || `${s.designation} · ${s.constellation}`;identity.append(name,detail);const magnitude=document.createElement('small');magnitude.className='discovery-magnitude';magnitude.textContent=formatMagnitude(s).replace(/^mag /,'');b.append(identity,magnitude);b.onclick=()=>{flyTo(s.ra,s.dec);choose(s);};entries.append(b);});}
  }
  const p=(ra,dec)=>{const local=skyFrame.toLocal(ra,dec);return project(local.ra,local.dec,view,w,h);};
  function path(coords,color,lineWidth=.7){ctx.beginPath();let last=null;for(const [ra,dec] of coords){const q=p(ra,dec);if(q && last && Math.hypot(q[0]-last[0],q[1]-last[1])<w)ctx.lineTo(...q);else if(q)ctx.moveTo(...q);last=q;}ctx.strokeStyle=color;ctx.lineWidth=lineWidth;ctx.stroke();}
@@ -83,7 +89,14 @@ async function start(){
  function render(){
   cancelAnimationFrame(frame);frame=0;
   ctx.clearRect(0,0,w,h);visible=[];
-  photographicSky?.draw(ctx,view,skyFrame,w,h);
+  surveySky.update(view,skyFrame,w,h);
+  const detailed=surveySky.draw(ctx,w,h);
+  if(!detailed)photographicSky?.draw(ctx,view,skyFrame,w,h);
+  const credit=$('#photo-credit');
+  credit.hidden=!photographicSky&&!detailed;
+  credit.textContent=detailed?`DSS2 · STScI / ${surveySky.provider==='NASA'?'NASA SkyView':'CDS'}`:surveySky.state==='loading'?'Loading DSS2 detail…':surveySky.state==='unavailable'?'Survey unavailable · ESO/S. Brunier':surveySky.state==='wide'?'ESO/S. Brunier · zoom in for HD':'ESO/S. Brunier';
+  credit.href=detailed?(surveySky.provider==='NASA'?'https://skyview.gsfc.nasa.gov/':'https://aladin.cds.unistra.fr/hips/'):'https://www.eso.org/public/images/eso0932a/';
+  credit.title=detailed?(surveySky.provider==='NASA'?'DSS2 red-band photography · STScI / NASA SkyView':'Digitized Sky Survey 2 · STScI, processed by CDS'):'ESO/S. Brunier panorama · CC BY 4.0';
   if(observer){
    const zenith=observerZenith(observer.latitude,observer.month),q=p(zenith.ra,zenith.dec);
    if(q){ctx.strokeStyle='#e5bd7766';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-7,q[1]);ctx.lineTo(q[0]+7,q[1]);ctx.moveTo(q[0],q[1]-7);ctx.lineTo(q[0],q[1]+7);ctx.stroke();}
@@ -102,10 +115,18 @@ async function start(){
    ctx.fillStyle=`rgba(${color},${opacity})`;ctx.beginPath();ctx.arc(...q,radius,0,Math.PI*2);ctx.fill();
   }
   for(const s of background){const q=p(...s.geometry.coordinates);if(!q||q[0]<0||q[0]>w||q[1]<0||q[1]>h)continue;paintStar(q,s.properties.mag,s.properties.bv);}
-  for(const s of stars){const q=p(s.ra,s.dec);if(!q||q[0]<-20||q[0]>w+20||q[1]<-20||q[1]>h+20)continue;visible.push({s,q});paintStar(q,s.mag,s.bv);
-   if(selected?.id===s.id){ctx.strokeStyle='#b0e7cf';ctx.lineWidth=1;ctx.beginPath();ctx.arc(...q,12,0,Math.PI*2);ctx.stroke();}
-   else if(hovered?.id===s.id){ctx.strokeStyle='#b0e7cf66';ctx.lineWidth=1;ctx.beginPath();ctx.arc(...q,10,0,Math.PI*2);ctx.stroke();}
-   if(pulse?.id===s.id){const t=(performance.now()-pulse.start)/900;if(t<1){ctx.strokeStyle=`rgba(176,231,207,${(1-t)*.8})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(...q,12+t*34,0,Math.PI*2);ctx.stroke();draw();}else pulse=null;}
+  for(const s of stars){const q=p(s.ra,s.dec);if(!q)continue;
+   const footprint=s.type?projectOutline(shapes.get(s.id),p):null;
+   if(footprint){const b=footprint.bounds;if(b.right<0||b.left>w||b.bottom<0||b.top>h)continue;}
+   else if(q[0]<-20||q[0]>w+20||q[1]<-20||q[1]>h+20)continue;
+   visible.push({s,q,footprint});
+   const active=selected?.id===s.id||hovered?.id===s.id;
+   const idleAlpha=s.type==='cluster'||s.type==='galaxy'||(s.type==='nebula'&&!s.outlines?.length)?'33':'66';
+   if(footprint)paintOutline(ctx,footprint,`${objectColor(s)}${idleAlpha}`,false,s.subtype);else if(s.type)paintDeepSkyMarker(ctx,s,q,active);else paintStar(q,s.mag,s.bv);
+   if(footprint&&(selected?.id===s.id||hovered?.id===s.id)){paintOutline(ctx,footprint,selected?.id===s.id?'#b0e7cf':'#b0e7cf88',selected?.id===s.id,s.subtype);}
+   else if(!s.type&&selected?.id===s.id){ctx.strokeStyle='#b0e7cf';ctx.lineWidth=1;ctx.beginPath();ctx.arc(...q,12,0,Math.PI*2);ctx.stroke();}
+   else if(!s.type&&hovered?.id===s.id){ctx.strokeStyle='#b0e7cf66';ctx.lineWidth=1;ctx.beginPath();ctx.arc(...q,10,0,Math.PI*2);ctx.stroke();}
+   if(pulse?.id===s.id){const t=(performance.now()-pulse.start)/900;if(t<1){if(footprint)paintOutline(ctx,footprint,`rgba(176,231,207,${(1-t)*.8})`,true,s.subtype);else if(!s.type){ctx.strokeStyle=`rgba(176,231,207,${(1-t)*.8})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(...q,12+t*34,0,Math.PI*2);ctx.stroke();}draw();}else pulse=null;}
   }
   // Keep labels clear of the overlays drawn on top of the sky.
   const sky=canvas.getBoundingClientRect(),overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
@@ -153,12 +174,14 @@ async function start(){
   flight=requestAnimationFrame(step);
  }
  function stopFlight(){cancelAnimationFrame(flight);flight=0;}
- const hits=(x,y)=>visible.map(v=>({...v,d:Math.hypot(v.q[0]-x,v.q[1]-y)})).filter(v=>v.d<18).sort((a,b)=>a.d-b.d);
+ const hits=(x,y)=>visible.map(v=>{const centerDistance=Math.hypot(v.q[0]-x,v.q[1]-y);return {...v,d:outlineContains(v.footprint,x,y)?Math.min(centerDistance,12):centerDistance};}).filter(v=>v.d<18).sort((a,b)=>a.d-b.d);
  function choose(s,{focus=false}={}){
   selected=s;
   const known=found.has(s.id),revealed=known||reviewing;
   $('#selection').hidden=true;$('#guess-form').hidden=false;
   $('#star-kind').textContent=revealed?s.name:'';
+  $('#guess').placeholder=objectType(s);
+  $('#guess').setAttribute('aria-label',`${objectType(s)} name`);
   $('#star-kind').classList.toggle('missed',reviewing&&!known);
   $('.star-panel').classList.toggle('named',known);
   $('.star-panel').classList.toggle('missed',reviewing&&!known);
@@ -191,7 +214,7 @@ async function start(){
    const field=$('.guess-input');field.classList.remove('shake');void field.offsetWidth;field.classList.add('shake');
   }
  };
- function zoom(f){view.fov=Math.max(3,Math.min(110,view.fov*f));}$('#grid').onclick=()=>{showGrid=!showGrid;$('#grid').classList.toggle('active',showGrid);$('#grid').setAttribute('aria-pressed',showGrid);render();};canvas.addEventListener('wheel',e=>{e.preventDefault();stopFlight();zoom(Math.exp(e.deltaY*.001));draw();},{passive:false});
+ function zoom(f){view.fov=Math.max(.1,Math.min(110,view.fov*f));}$('#grid').onclick=()=>{showGrid=!showGrid;$('#grid').classList.toggle('active',showGrid);$('#grid').setAttribute('aria-pressed',showGrid);render();};canvas.addEventListener('wheel',e=>{e.preventDefault();stopFlight();zoom(Math.exp(e.deltaY*.001));draw();},{passive:false});
  const pointers=new Map();let moved=false,origin=null;
  canvas.onpointerdown=e=>{stopFlight();hovered=null;canvas.style.cursor='';canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){origin={x:e.clientX,y:e.clientY};moved=false;}else moved=true;};
  canvas.onpointermove=e=>{if(!pointers.has(e.pointerId)){if(e.pointerType==='mouse'){const rect=canvas.getBoundingClientRect(),next=hits(e.clientX-rect.left,e.clientY-rect.top)[0]?.s??null;if(next!==hovered){hovered=next;canvas.style.cursor=next?'pointer':'';draw();}}return;}const old=pointers.get(e.pointerId),next={x:e.clientX,y:e.clientY};if(pointers.size===2){const other=[...pointers.entries()].find(([id])=>id!==e.pointerId)[1];const before=Math.hypot(old.x-other.x,old.y-other.y),after=Math.hypot(next.x-other.x,next.y-other.y);if(after>0){zoom(before/after);draw();}}else{const scale=view.fov/Math.min(w,h);view.ra=(view.ra+(next.x-old.x)*scale+360)%360;view.dec=Math.max(-90,Math.min(90,view.dec+(next.y-old.y)*scale));if(Math.hypot(next.x-origin.x,next.y-origin.y)>5)moved=true;draw();}pointers.set(e.pointerId,next);};
@@ -200,14 +223,14 @@ async function start(){
  function setReview(value){
   reviewing=value;document.body.classList.toggle('reviewing',value);$('#review').hidden=!value;$('#restart').hidden=!value;
   $('#done').textContent=value?'Resume':'Done · reveal sky';$('#done').setAttribute('aria-pressed',value);
-  $('#selection-description').textContent=value?'Select a star to view its details':'Click on a star and name it';
+  $('#selection-description').textContent=value?'Select an object to view its details':'Select an object and name it';
   if(value){
    const fragment=document.createDocumentFragment();
    [...stars].sort((a,b)=>(a.mag??Infinity)-(b.mag??Infinity)||a.name.localeCompare(b.name)).forEach(s=>{
-    const known=found.has(s.id),button=document.createElement('button');button.className=`result ${known?'got':'missed'}`;button.dataset.star=s.id;
+    const known=found.has(s.id),button=document.createElement('button');button.className=`result ${known?'got':'missed'}`;button.dataset.star=s.id;button.dataset.type=s.type||'star';
     const info=document.createElement('span'),name=document.createElement('span'),detail=document.createElement('small'),mag=document.createElement('small');
-    info.className='discovery-identity';name.textContent=s.name;detail.textContent=s.bayer || `${s.designation} · ${s.constellation}`;button.setAttribute('aria-label',`${s.name}, ${known?'named':'missed'}, ${starDetail(s)}`);info.append(name,detail);mag.textContent=formatMagnitude(s).replace(/^mag /,'')||'—';mag.className='result-mag discovery-magnitude';button.dataset.mag=s.mag??'';button.dataset.search=[s.name,...s.aliases,s.bayer||'',s.designation,s.constellation].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();button.append(info,mag);
-    button.onclick=()=>{flyTo(s.ra,s.dec,Math.min(view.fov,35));choose(s);document.querySelectorAll('.result[aria-current]').forEach(el=>el.removeAttribute('aria-current'));button.setAttribute('aria-current','true');};fragment.append(button);
+    info.className='discovery-identity';name.textContent=s.name;detail.textContent=s.type?`${objectType(s)} · ${s.designation}`:s.bayer || `${s.designation} · ${s.constellation}`;button.setAttribute('aria-label',`${s.name}, ${known?'named':'missed'}, ${starDetail(s)}`);info.append(name,detail);mag.textContent=formatMagnitude(s).replace(/^mag /,'')||'—';mag.className='result-mag discovery-magnitude';button.dataset.mag=s.mag??'';button.dataset.search=normalize([s.name,...s.aliases,s.bayer||'',s.designation,s.constellation,objectType(s)].join(' '));button.append(info,mag);
+    button.onclick=()=>{flyTo(s.ra,s.dec,Math.min(view.fov,s.type?Math.max(.5,(s.majorArcmin||15)/60*3):35));choose(s);document.querySelectorAll('.result[aria-current]').forEach(el=>el.removeAttribute('aria-current'));button.setAttribute('aria-current','true');};fragment.append(button);
    });$('#results').replaceChildren(fragment);filterResults();
   }
   try{storage?.setItem('starhopper.review',String(value));}catch{}
@@ -223,8 +246,9 @@ async function start(){
  }
  $('#review-toggle').onclick=()=>setSidebarCollapsed(!document.body.classList.contains('sidebar-collapsed'));
  wideLayout.addEventListener('change',()=>{if(!wideLayout.matches)setSidebarCollapsed(false);});
- function filterResults(){const query=$('#result-search').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();document.querySelectorAll('.result').forEach(row=>{row.hidden=!row.dataset.search.includes(query);});}
+ function filterResults(){const query=normalize($('#result-search').value);document.querySelectorAll('.result').forEach(row=>{row.hidden=!row.dataset.search.includes(query)||($('#result-type').value!=='all'&&row.dataset.type!==$('#result-type').value);});}
  $('#result-search').addEventListener('input',filterResults);
+ $('#result-type').addEventListener('change',filterResults);
  $('#restart').onclick=()=>{
   if(!confirm('Restart? This clears all your discoveries and resets your score.'))return;
   stopFlight();found.clear();pulse=null;keyboardIndex=0;Object.assign(view,initialView());

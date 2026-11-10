@@ -6,6 +6,10 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.BR
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ await page.route('https://gc.zgo.at/**',route=>route.abort());
+ await page.route('https://mmilanta.goatcounter.com/**',route=>route.abort());
+ await page.route('https://skyview.gsfc.nasa.gov/**',route=>route.abort());
+ await page.route('**/hips-image-services/hips2fits?**',route=>route.abort());
  // Use a fixed seasonal view with Betelgeuse near the center for click checks.
  await page.addInitScript(()=>localStorage.setItem('starhopper.observer',JSON.stringify({latitude:7,month:1})));
  await page.goto(process.env.TEST_URL || 'http://localhost:5173');await page.waitForSelector('#loading',{state:'detached'});
@@ -27,7 +31,7 @@ try{
   await page.getByRole('button',{name:'Hide sidebar',exact:true}).click();
   assert.ok(await page.locator('#sidebar').isHidden());
   assert.ok(await page.locator('#compact-score').isVisible());
-  assert.equal((await page.locator('#compact-score').textContent()).replace(/\s/g,''),'1/652');
+  assert.equal((await page.locator('#compact-score').textContent()).replace(/\s/g,''),`1/${stars.length+JSON.parse(fs.readFileSync('public/data/deep-sky.json')).length}`);
   assert.equal(await page.locator('#review-toggle').getAttribute('aria-expanded'),'false');
   await page.waitForFunction(()=>document.querySelector('#sky').clientWidth===innerWidth);
   const after=await page.locator('#sky').boundingBox();

@@ -8,7 +8,7 @@ const photoRotation=[
  [-.877511730887,-.216887613208,.427706587969],
 ];
 const radians=Math.PI/180;
-const photoOpacity=.20;
+const photoOpacity=.45;
 const toPhoto=(ra,dec)=>{
  const a=ra*radians,d=dec*radians,v=[Math.cos(a)*Math.cos(d),Math.sin(a)*Math.cos(d),Math.sin(d)];
  return photoRotation.map(row=>row.reduce((sum,n,i)=>sum+n*v[i],0));

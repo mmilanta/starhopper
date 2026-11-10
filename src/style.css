@@ -204,8 +204,8 @@ dialog a { color: var(--accent); text-underline-offset: 3px; }
   .sky-caption span:first-child { font-size: 11px; }
   .sky-caption span:last-child { font-size: 7px; }
   .map-tools { top: 18px; right: 34px; }
-  .sky-caption { max-width: calc(100% - 122px); }
-  .reviewing .sky-caption { max-width: calc(100% - 122px); }
+  .sky-caption { max-width: calc(100% - 166px); }
+  .reviewing .sky-caption { max-width: calc(100% - 166px); }
   #observer-form input, #observer-form select { font-size: 16px; }
   .star-panel { bottom: 16px; width: min(340px, calc(100% - 30px)); }
   .panel-idle p { font-size: 11px; }
@@ -225,3 +225,5 @@ dialog a { color: var(--accent); text-underline-offset: 3px; }
   *, *::before, *::after { transition: none !important; }
   .guess-input.shake { animation: none; }
 }
+
+#result-type { width: 100%; margin: 0 0 8px; padding: 8px; color: var(--text); background: #141a1d; border: 1px solid #303638; font: inherit; font-size: 12px; }
